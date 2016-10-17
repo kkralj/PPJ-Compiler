@@ -7,6 +7,11 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.util.Scanner;
 
+/**
+ * 
+ * @author Mato Manovic
+ * @version 1.0
+ */
 public class LA {
 	private static String data;
 	private static String state;
