@@ -4,12 +4,35 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+ * Generator for Lexical Analyzer.
+ * 
+ * @author nikola
+ *
+ */
 public class GLA {
 
+	/**
+	 * Regular definitions (name, regular expression)
+	 */
 	private static Map<String, String> regularneDefinicije = new HashMap<>();
+
+	/**
+	 * States of Lexical Analyzer.
+	 */
 	private static List<String> stanjaLA = new ArrayList<>();
+
+	/**
+	 * Names of lexical classes.
+	 */
 	private static List<String> leksickeJedinke = new ArrayList<>();
 
+	/**
+	 * Main method of the program.
+	 * 
+	 * @param args
+	 *            Not used here.
+	 */
 	public static void main(String[] args) {
 		input();
 	}
@@ -27,7 +50,7 @@ public class GLA {
 
 				tmp[0] = tmp[0].substring(1, tmp[0].length() - 1);
 				String naziv = tmp[0];
-				String izraz = escape(tmp[1]);
+				String izraz = escape(expandRegularDefinition(tmp[1]));
 
 				regularneDefinicije.put(naziv, izraz);
 
@@ -77,8 +100,42 @@ public class GLA {
 		}
 	}
 
-	static void expandRegularDefinitions() {
+	/**
+	 * Expands all references in regular definitions.
+	 * 
+	 * <p>
+	 * For example: {reg1} 1|2|3 {reg2} {reg1}|4|5
+	 * 
+	 * {reg2} becomes (1|2|3)|4|5
+	 * 
+	 * @param regDef
+	 *            regular definition to expand.
+	 * @return Returns regular definition with all references expanded.
+	 */
+	static String expandRegularDefinition(String regDef) {
+		// nadji reference na regularne definicije
+		int start = regDef.indexOf('{');
 
+		while (start >= 0) {
+			// provjeri je li { escapean
+			if (start == 0 || (start > 0 && regDef.charAt(start - 1) != '\\')) {
+				int end = regDef.indexOf('}', start);
+
+				// provjeri je li } escapean
+				while (regDef.charAt(end - 1) == '\\') {
+					end = regDef.indexOf('}', end + 1);
+				}
+
+				String regRef = regDef.substring(start + 1, end);
+
+				regDef = regDef.substring(0, start) + "(" + regularneDefinicije.get(regRef) + ")"
+						+ regDef.substring(end + 1, regDef.length());
+			}
+
+			start = regDef.indexOf('{', start);
+		}
+
+		return regDef;
 	}
 
 	/**
