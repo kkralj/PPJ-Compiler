@@ -125,7 +125,7 @@ public class LA {
             sourceCode.append(line).append("\n");
         }
 
-        LA lexicalAnalyzer = new LA(sourceCode.toString());
+        LA lexicalAnalyzer = new LA("3 -  - ---0x12");
         lexicalAnalyzer.generateTokens();
     }
 }
