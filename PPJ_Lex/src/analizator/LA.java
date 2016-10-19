@@ -180,6 +180,7 @@ public class LA {
             sourceCode.append(line).append("\n");
         }
         LA lexicalAnalyzer = new LA(sourceCode.toString());
+
         lexicalAnalyzer.generateTokens();
     }
 }
