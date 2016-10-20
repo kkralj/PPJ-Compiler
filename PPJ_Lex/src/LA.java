@@ -188,9 +188,13 @@ public class LA {
         LA lexicalAnalyzer = new LA(sourceCode.toString());
 
         lexicalAnalyzer.generateTokens();
+<<<<<<< HEAD:PPJ_Lex/src/LA.java
 
         // TODO: read serialized Automat objects here and store it in the list automationList
 
 
+=======
+       
+>>>>>>> 070191ad45833cbb817704986d4487c99549f030:PPJ_Lex/src/analizator/LA.java
     }
 }

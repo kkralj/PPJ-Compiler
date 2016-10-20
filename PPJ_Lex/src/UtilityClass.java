@@ -141,10 +141,11 @@ public class UtilityClass {
 	}
 
 	/**
-	 * Pomoćna metoda koja rastavlja početni regularni izraz na podizraze.
-	 * Niđo ju je također pisao valjda je dobro napisana.
+	 * Pomoćna metoda koja rastavlja početni regularni izraz na podizraze. Niđo
+	 * ju je također pisao valjda je dobro napisana.
 	 * 
-	 * @param regex Izraz kojeg rastavljamo.
+	 * @param regex
+	 *            Izraz kojeg rastavljamo.
 	 * @return Listu podizraza.
 	 */
 	private static List<String> rastaviizraz(String regex) {
@@ -165,16 +166,17 @@ public class UtilityClass {
 			izbori.add(regex.substring(start, regex.length()));
 		}
 
-		// for (String s : izbori) {
-		// System.out.println(s);
-		// }
+//		 for (String s : izbori) {
+//		 System.out.println(s);
+//		 }
 		return izbori;
 	}
 
 	/**
 	 * Pomoćna metoda koja vraća broj novog stanja.
 	 * 
-	 * @param automat Automat.
+	 * @param automat
+	 *            Automat.
 	 * @return Novo stanje.
 	 */
 	private static int novo_stanje(Automat automat) {
@@ -185,23 +187,44 @@ public class UtilityClass {
 	/**
 	 * Pomoćna metoda koja dodaje u automat prijelaz.Ovdje je epsilon prijelaz
 	 * pa je zu prijelazni znak jednak znaku $.
-	 * @param automat Automat
-	 * @param pocetno Trenutno stanje.
-	 * @param sljedece Sljedece stanje.
+	 * 
+	 * @param automat
+	 *            Automat
+	 * @param pocetno
+	 *            Trenutno stanje.
+	 * @param sljedece
+	 *            Sljedece stanje.
 	 */
 	private static void dodajEpsilonPrijelaz(Automat automat, int pocetno, int sljedece) {
-		automat.prijelazi.put(pocetno + " $", new Integer(sljedece).toString());
+		String key = pocetno + " $";
+		if (!automat.prijelazi.containsKey(key)) {
+			automat.prijelazi.put(key, new Integer(sljedece).toString());
+		} else {
+			String value = automat.prijelazi.get(key) + " " + new Integer(sljedece).toString();
+			automat.prijelazi.put(key, value);
+		}
 	}
 
 	/**
 	 * Pomoćna metoda koja dodaje u automat prijelaz.
-	 * @param automat Automat
-	 * @param pocetno Trenutno stanje.
-	 * @param sljedece Sljedece stanje.
-	 * @param znak Prijelazni znak.
+	 * 
+	 * @param automat
+	 *            Automat
+	 * @param pocetno
+	 *            Trenutno stanje.
+	 * @param sljedece
+	 *            Sljedece stanje.
+	 * @param znak
+	 *            Prijelazni znak.
 	 */
 	private static void dodajPrijelaz(Automat automat, int pocetno, int sljedece, char znak) {
-		automat.prijelazi.put(pocetno + " " + znak, new Integer(sljedece).toString());
+		String key = pocetno + " " + znak;
+		if (!automat.prijelazi.containsKey(key)) {
+			automat.prijelazi.put(key, new Integer(sljedece).toString());
+		} else {
+			String value = automat.prijelazi.get(key) + " " + new Integer(sljedece).toString();
+			automat.prijelazi.put(key, value);
+		}
 	}
 
 }
