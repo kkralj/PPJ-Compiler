@@ -1,5 +1,3 @@
-package analizator;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -10,12 +8,14 @@ import java.util.List;
 public class LA {
 
     private List<LexerRule> lexerRules = new ArrayList<>();
+    private List<Automat> automationList = new ArrayList<>();
 
     private String source;
 
     public LA(final String sourceCode) {
         this.source = sourceCode;
         generateLexerRules();
+
     }
 
     private void generateLexerRules() {
@@ -50,9 +50,10 @@ public class LA {
 //        lexerRules.add(new LexerRule("ccc(ccc)*", "initial", 1, "ccc(ccc)*"));
 //        lexerRules.add(new LexerRule("\\n", "initial", 1, "newline_rule"));
 
-        lexerRules.add(new LexerRule("\\n", "initial", 1, "newline_rule"));
-        lexerRules.add(new LexerRule("aaa", "initial", 1, "aaa"));
-        lexerRules.add(new LexerRule("aa*", "initial", 1, "aa*"));
+        // vrati_se_prioritet
+//        lexerRules.add(new LexerRule("\\n", "initial", 1, "newline_rule"));
+//        lexerRules.add(new LexerRule("aaa", "initial", 1, "aaa"));
+//        lexerRules.add(new LexerRule("aa*", "initial", 1, "aa*"));
 
     }
 
@@ -67,19 +68,20 @@ public class LA {
             boolean atLeastOneStateValid = hasAtLeastOneState(bufferedString);
 
             if (atLeastOneStateValid) {
-                continue; // we hope to find even better solution so do nothing and continue eating
+                continue; // hope to find even better solution so just continue
 
             } else if (bufferedString.length() <= 1 && !atLeastOneStateValid) {
-                continue; // no valid states, but too few characters to recover, read further
+                continue; // no valid states but too few characters to recover, read further
 
             } else { // no more matches exist, extract the best one and recover
 
-                // temporarily remove last char and return it later
+                /* temporarily remove last char and return it later */
                 bufferedString = bufferedString.substring(0, bufferedString.length() - 1);
 
                 LexerRule rule = findBestRule(bufferedString);
 
-                if (rule == null) { // error recovery
+                /* error recovery */
+                if (rule == null) {
                     System.out.println("Error while processing ->" + bufferedString + "<-");
 
                     LexerRule prefixRule = bestPrefixRule(bufferedString);
@@ -174,13 +176,21 @@ public class LA {
 
     public static void main(String[] args) throws IOException {
         StringBuilder sourceCode = new StringBuilder();
-        BufferedReader bi = new BufferedReader(new InputStreamReader(args.length > 0 ? new FileInputStream(args[0]) : System.in));
+        BufferedReader bi = new BufferedReader(
+                new InputStreamReader(args.length > 0 ? new FileInputStream(args[0]) : System.in)
+        );
+
         String line;
         while ((line = bi.readLine()) != null) {
             sourceCode.append(line).append("\n");
         }
+
         LA lexicalAnalyzer = new LA(sourceCode.toString());
 
         lexicalAnalyzer.generateTokens();
+
+        // TODO: read serialized Automat objects here and store it in the list automationList
+
+
     }
 }
