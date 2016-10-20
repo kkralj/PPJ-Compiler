@@ -57,8 +57,12 @@ public class LA {
 
     }
 
+    private String lexerState;
+    private int currentLine = 0;
+
     public void generateTokens() {
-        String state;
+        lexerState = "S_jedan";
+
         String bufferedString = "";
 
         for (int i = 0; i < source.length(); i++) {
@@ -97,7 +101,7 @@ public class LA {
                         System.out.println("Rule name: " + prefixRule.getName());
                         System.out.println();
 
-                        state = prefixRule.getName();
+                        lexerState = prefixRule.getName();
                         bufferedString = bufferedString.substring(prefixMatchState.getMatchLength());
                     }
 
@@ -114,7 +118,7 @@ public class LA {
                     System.out.println("Rule name: " + rule.getName());
                     System.out.println();
 
-                    state = rule.getName();
+                    lexerState = rule.getName();
                     bufferedString = bufferedString.substring(matchState.getMatchLength());
                 }
 
@@ -188,13 +192,8 @@ public class LA {
         LA lexicalAnalyzer = new LA(sourceCode.toString());
 
         lexicalAnalyzer.generateTokens();
-<<<<<<< HEAD:PPJ_Lex/src/LA.java
 
         // TODO: read serialized Automat objects here and store it in the list automationList
 
-
-=======
-       
->>>>>>> 070191ad45833cbb817704986d4487c99549f030:PPJ_Lex/src/analizator/LA.java
     }
 }

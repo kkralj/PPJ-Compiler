@@ -9,6 +9,7 @@ import java.util.Scanner;
  */
 public class DemonstracijaAutomata {
     public static void main(String[] args) {
+        System.out.println("promjena");
         Scanner scanner = new Scanner(System.in);
         Automat automat = new Automat();
         UtilityClass.pretvori(scanner.nextLine(), automat);
