@@ -1,6 +1,7 @@
 package analizator;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
@@ -29,39 +30,77 @@ public class LA {
 //        lexerRules.add(new LexerRule("aaa", "initial", 1, "3a-rule"));
 //        lexerRules.add(new LexerRule("\\n", "initial", 1, "newline_rule"));
 
-        // 3 -  - ---0x12
-        lexerRules.add(new LexerRule("0|1|2|3", "initial", 1, "number"));
-        lexerRules.add(new LexerRule("0x(1|2)*", "initial", 1, "hex"));
+        /*
+            3 -  - ---0x12
+         */
+//        lexerRules.add(new LexerRule("0|1|2|3", "initial", 1, "number"));
+//        lexerRules.add(new LexerRule("0x(1|2)*", "initial", 1, "hex"));
+//        lexerRules.add(new LexerRule("\\n", "initial", 1, "newline_rule"));
+//        lexerRules.add(new LexerRule("\\s", "initial", 1, "ignore_space"));
+//        lexerRules.add(new LexerRule("-", "initial", 1, "mali_minus"));
+//        lexerRules.add(new LexerRule("-(\\s)*-", "initial", 1, "posebni_operator"));
+
+
+        // greska_u_stanju
+        // lexerRules.add(new LexerRule("xxx", "initial", 1, "3x-rule"));
+
+        // vrati_se
+//        lexerRules.add(new LexerRule("aa*", "initial", 1, "aa*"));
+//        lexerRules.add(new LexerRule("bb(bb)*", "initial", 1, "bb(bb)*"));
+//        lexerRules.add(new LexerRule("ccc(ccc)*", "initial", 1, "ccc(ccc)*"));
+//        lexerRules.add(new LexerRule("\\n", "initial", 1, "newline_rule"));
+
         lexerRules.add(new LexerRule("\\n", "initial", 1, "newline_rule"));
-        lexerRules.add(new LexerRule("\\s", "initial", 1, "ignore_space"));
-        lexerRules.add(new LexerRule("-", "initial", 1, "mali_minus"));
-        lexerRules.add(new LexerRule("-(\\s)*-", "initial", 1, "posebni_operator"));
+        lexerRules.add(new LexerRule("aaa", "initial", 1, "aaa"));
+        lexerRules.add(new LexerRule("aa*", "initial", 1, "aa*"));
+
     }
 
     public void generateTokens() {
-//        System.out.println("Source code:");
-//        System.out.println(source);
-
         String state;
-        int begin = 0, last = -1, end = 0;
         String bufferedString = "";
 
         for (int i = 0; i < source.length(); i++) {
             char current = source.charAt(i);
             bufferedString += current;
 
-            if (hasAtLeastOneState(bufferedString)) {
+            boolean atLeastOneStateValid = hasAtLeastOneState(bufferedString);
+
+            if (atLeastOneStateValid) {
                 continue; // we hope to find even better solution so do nothing and continue eating
 
-            } else { // no more matches exist, extract the best one
+            } else if (bufferedString.length() <= 1 && !atLeastOneStateValid) {
+                continue; // no valid states, but too few characters to recover, read further
 
-                // temporarily remove last char but add it later
+            } else { // no more matches exist, extract the best one and recover
+
+                // temporarily remove last char and return it later
                 bufferedString = bufferedString.substring(0, bufferedString.length() - 1);
 
                 LexerRule rule = findBestRule(bufferedString);
 
-                if (rule == null) {
-                    // do error recovery here?
+                if (rule == null) { // error recovery
+                    System.out.println("Error while processing ->" + bufferedString + "<-");
+
+                    LexerRule prefixRule = bestPrefixRule(bufferedString);
+
+                    if (prefixRule == null) {
+                        System.err.println("Error char: ->" + bufferedString.charAt(0) + "<-");
+                        bufferedString = bufferedString.substring(1);
+                    } else {
+                        LexerRule.MatchState prefixMatchState = prefixRule.getMatchState(bufferedString);
+
+                        System.out.println("Match length: " + prefixMatchState.getMatchLength());
+                        System.out.println("Match: ->" + bufferedString.substring(0, prefixMatchState.getMatchLength()) + "<-");
+                        System.out.println("Rule name: " + prefixRule.getName());
+                        System.out.println();
+
+                        state = prefixRule.getName();
+                        bufferedString = bufferedString.substring(prefixMatchState.getMatchLength());
+                    }
+
+                    i--; // start again
+                    continue;
 
                 } else {
                     System.out.println("Considering string: ->" + bufferedString + "<-");
@@ -81,6 +120,22 @@ public class LA {
                 bufferedString += current; // removed character is added back
             }
         }
+    }
+
+    private LexerRule bestPrefixRule(String input) {
+        int bestLen = 0;
+        LexerRule bestRule = null;
+
+        for (int i = 0; i < input.length(); i++) {
+            for (LexerRule lexerRule : lexerRules) {
+                int curLen = lexerRule.getMatchState(input.substring(0, i + 1)).getMatchLength();
+                if (curLen > bestLen) {
+                    bestLen = curLen;
+                    bestRule = lexerRule;
+                }
+            }
+        }
+        return bestRule;
     }
 
     private LexerRule findBestRule(String bufferedString) {
@@ -119,13 +174,13 @@ public class LA {
 
     public static void main(String[] args) throws IOException {
         StringBuilder sourceCode = new StringBuilder();
-        BufferedReader bi = new BufferedReader(new InputStreamReader(System.in));
+        BufferedReader bi = new BufferedReader(new InputStreamReader(args.length > 0 ? new FileInputStream(args[0]) : System.in));
         String line;
         while ((line = bi.readLine()) != null) {
             sourceCode.append(line).append("\n");
         }
+        LA lexicalAnalyzer = new LA(sourceCode.toString());
 
-        LA lexicalAnalyzer = new LA("3 -  - ---0x12");
         lexicalAnalyzer.generateTokens();
        
     }
