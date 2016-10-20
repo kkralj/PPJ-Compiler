@@ -44,7 +44,7 @@ public class GLA {
 
                 tmp[0] = tmp[0].substring(1, tmp[0].length() - 1);
                 String naziv = tmp[0];
-                String izraz = escape(expandRegularDefinition(tmp[1]));
+                String izraz = expandRegularDefinition(tmp[1]);
 
                 regularneDefinicije.put(naziv, izraz);
 
@@ -77,7 +77,7 @@ public class GLA {
                 String tmp[] = linija.split(">");
 
                 String stanje = tmp[0].substring(1, tmp[0].length());
-                String regDef = escape(tmp[1]);
+                String regDef = tmp[1];
 
                 System.out.println(stanje + "<> " + regDef);
 
@@ -147,6 +147,9 @@ public class GLA {
         }
     }
 
+    
+    //Mislim da je nepotrebno escapat to se radi u pretvorbi regularnog izraza
+    //u automat
     /**
      * Escapes all occurences of '\' before a character.
      * <p>
@@ -155,30 +158,30 @@ public class GLA {
      * @param s String to escape.
      * @return Returns escaped string.
      */
-    private static String escape(String s) {
-        StringBuilder sb = new StringBuilder();
-        char ss[] = s.toCharArray();
-
-        for (int i = 0; i < ss.length; i++) {
-            // slučaj \\
-            if (ss[i] == '\\') {
-                if (ss[i + 1] == 'n') {
-                    sb.append('\n');
-                } else if (ss[i + 1] == 't') {
-                    sb.append('\t');
-                } else if (ss[i + 1] == '_') {
-                    sb.append(' ');
-                } else {
-                    sb.append(ss[i + 1]);
-                }
-
-                i++;
-            } else {
-                sb.append(ss[i]);
-            }
-        }
-
-        return sb.toString();
-    }
+//    private static String escape(String s) {
+//        StringBuilder sb = new StringBuilder();
+//        char ss[] = s.toCharArray();
+//
+//        for (int i = 0; i < ss.length; i++) {
+//            // slučaj \\
+//            if (ss[i] == '\\') {
+//                if (ss[i + 1] == 'n') {
+//                    sb.append('\n');
+//                } else if (ss[i + 1] == 't') {
+//                    sb.append('\t');
+//                } else if (ss[i + 1] == '_') {
+//                    sb.append(' ');
+//                } else {
+//                    sb.append(ss[i + 1]);
+//                }
+//
+//                i++;
+//            } else {
+//                sb.append(ss[i]);
+//            }
+//        }
+//
+//        return sb.toString();
+//    }
 
 }

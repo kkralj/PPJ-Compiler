@@ -13,8 +13,9 @@ public class Automat {
 	public int desno_stanje;// krajnje prihvatljivo stanje automata
 	/**
 	 * Kao na utr-u pohranjujem prijlaze na nacin da je kljuc oblika
-	 * "trenutnostanje prijelazniznak" a vrijednost "novostanje". Mada ce ova stanje
-	 * biti integeri ovdje ce biti kao String.
+	 * "trenutnostanje prijelazniznak" a vrijednost
+	 * "skup novih stanja u koje automat prelazi.Stanja ce biti odvojena razmakom"
+	 * . Mada ce ova stanje biti integeri ovdje ce biti kao String.
 	 */
 	public Map<String, String> prijelazi = new LinkedHashMap<>();
 	/**
