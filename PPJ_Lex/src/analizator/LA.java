@@ -127,5 +127,6 @@ public class LA {
 
         LA lexicalAnalyzer = new LA("3 -  - ---0x12");
         lexicalAnalyzer.generateTokens();
+       
     }
 }
