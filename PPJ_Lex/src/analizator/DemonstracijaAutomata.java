@@ -1,3 +1,4 @@
+package analizator;
 import java.io.IOException;
 import java.util.Scanner;
 
@@ -11,8 +12,7 @@ import java.util.Scanner;
 public class DemonstracijaAutomata {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-        Automat automat = new Automat();
-        UtilityClass.pretvori("ca*b", automat);
+        Automat automat = new Automat("ca*b");
         //System.out.println(automat);
         System.out.println(automat.isValidInput("caaaaabbbbb"));
         System.out.println(automat.isValidInput("caaaaab"));
