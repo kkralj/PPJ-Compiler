@@ -25,7 +25,8 @@ public class GLA {
     /**
      * Main method of the program.
      *
-     * @param args Not used here.
+     * @param args
+     *            Not used here.
      */
     public static void main(String[] args) {
         input();
@@ -74,7 +75,7 @@ public class GLA {
                     linija = scanner.nextLine();
                 }
 
-                String tmp[] = linija.split(">");
+                String tmp[] = linija.split(">", 2);
 
                 String stanje = tmp[0].substring(1, tmp[0].length());
                 String regDef = tmp[1];
@@ -102,20 +103,21 @@ public class GLA {
      * <p>
      * {reg2} becomes (1|2|3)|4|5
      *
-     * @param regDef regular definition to expand.
+     * @param regDef
+     *            regular definition to expand.
      * @return Returns regular definition with all references expanded.
      */
-    static String expandRegularDefinition(String regDef) {
+    private static String expandRegularDefinition(String regDef) {
         // nadji reference na regularne definicije
         int start = regDef.indexOf('{');
 
         while (start >= 0) {
             // provjeri je li { escapean
-            if (start == 0 || (start > 0 && regDef.charAt(start - 1) != '\\')) {
+            if (!isEscaped(regDef, start)) {
                 int end = regDef.indexOf('}', start);
 
                 // provjeri je li } escapean
-                while (regDef.charAt(end - 1) == '\\') {
+                while (isEscaped(regDef, end)) {
                     end = regDef.indexOf('}', end + 1);
                 }
 
@@ -125,17 +127,49 @@ public class GLA {
                         + regDef.substring(end + 1, regDef.length());
             }
 
-            start = regDef.indexOf('{', start);
+            start = regDef.indexOf('{', start + 1);
         }
 
         return regDef;
     }
 
     /**
+     * Checks if character at given position is escaped with \.
+     * 
+     * @param s
+     *            String to check.
+     * @param pos
+     *            Position of character in the string.
+     * @return True if character at provided position is escaped, false
+     *         otherwise.
+     */
+    private static boolean isEscaped(String s, int pos) {
+        if (pos < 0 || pos >= s.length()) {
+            throw new IllegalArgumentException();
+        }
+
+        if (pos == 0) {
+            return false;
+        }
+
+        int count = 0;
+        pos--;
+
+        while (pos >= 0 && s.charAt(pos) == '\\') {
+            pos--;
+            count++;
+        }
+
+        return count % 2 != 0;
+    }
+
+    /**
      * Splits given string by empty spaces and adds all but first to given list.
      *
-     * @param s    String to split.
-     * @param list List to add split strings to.
+     * @param s
+     *            String to split.
+     * @param list
+     *            List to add split strings to.
      */
     private static void skipSplitAdd(String s, List<String> list) {
         String tmp[] = s.split(" ");
@@ -147,41 +181,41 @@ public class GLA {
         }
     }
 
-    
-    //Mislim da je nepotrebno escapat to se radi u pretvorbi regularnog izraza
-    //u automat
+    // Mislim da je nepotrebno escapat to se radi u pretvorbi regularnog izraza
+    // u automat
     /**
      * Escapes all occurences of '\' before a character.
      * <p>
      * For example '\|' is '|' after escape, also '\\' == '\'.
      *
-     * @param s String to escape.
+     * @param s
+     *            String to escape.
      * @return Returns escaped string.
      */
-//    private static String escape(String s) {
-//        StringBuilder sb = new StringBuilder();
-//        char ss[] = s.toCharArray();
-//
-//        for (int i = 0; i < ss.length; i++) {
-//            // slučaj \\
-//            if (ss[i] == '\\') {
-//                if (ss[i + 1] == 'n') {
-//                    sb.append('\n');
-//                } else if (ss[i + 1] == 't') {
-//                    sb.append('\t');
-//                } else if (ss[i + 1] == '_') {
-//                    sb.append(' ');
-//                } else {
-//                    sb.append(ss[i + 1]);
-//                }
-//
-//                i++;
-//            } else {
-//                sb.append(ss[i]);
-//            }
-//        }
-//
-//        return sb.toString();
-//    }
+    // private static String escape(String s) {
+    // StringBuilder sb = new StringBuilder();
+    // char ss[] = s.toCharArray();
+    //
+    // for (int i = 0; i < ss.length; i++) {
+    // // slučaj \\
+    // if (ss[i] == '\\') {
+    // if (ss[i + 1] == 'n') {
+    // sb.append('\n');
+    // } else if (ss[i + 1] == 't') {
+    // sb.append('\t');
+    // } else if (ss[i + 1] == '_') {
+    // sb.append(' ');
+    // } else {
+    // sb.append(ss[i + 1]);
+    // }
+    //
+    // i++;
+    // } else {
+    // sb.append(ss[i]);
+    // }
+    // }
+    //
+    // return sb.toString();
+    // }
 
 }
