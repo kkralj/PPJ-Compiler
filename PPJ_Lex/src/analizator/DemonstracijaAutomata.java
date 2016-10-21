@@ -1,5 +1,5 @@
 package analizator;
-import java.io.IOException;
+
 import java.util.Scanner;
 
 /**
@@ -13,17 +13,17 @@ public class DemonstracijaAutomata {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         Automat automat = new Automat("ca*b");
-        //System.out.println(automat);
-        System.out.println(automat.isValidInput("caaaaabbbbb"));
-        System.out.println(automat.isValidInput("caaaaab"));
-        System.out.println(automat.isValidInput("cb"));
-        System.out.println(automat.isValidInput("cc"));
-        System.out.println(automat.isValidInput("cd"));
-        System.out.println(automat.isValidInput("c"));
-        System.out.println(automat.isValidInput("caa"));
-        System.out.println(automat.isValidInput("d"));
-        System.out.println(automat.isValidInput(""));//ovo sam stavio isto da vraca
-        //true mada pretpostavljam da nece biti praznih inputa
-        
+//        System.out.println(automat);
+
+        System.out.println(automat.isValidInput("caaaaabbbbb").getMatchLength());
+        System.out.println(automat.isValidInput("caaaaab").getMatchLength());
+        System.out.println(automat.isValidInput("cb").getMatchLength());
+        System.out.println(automat.isValidInput("cc").getMatchLength());
+        System.out.println(automat.isValidInput("cd").getMatchLength());
+        System.out.println(automat.isValidInput("c").getMatchLength());
+        System.out.println(automat.isValidInput("caa").getMatchLength());
+        System.out.println(automat.isValidInput("d").getMatchLength());
+        System.out.println(automat.isValidInput("caaaaaaaaaaaaaab").isFullyMatched());
+
     }
 }
