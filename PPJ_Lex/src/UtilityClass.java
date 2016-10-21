@@ -196,11 +196,11 @@ public class UtilityClass {
 	 *            Sljedece stanje.
 	 */
 	private static void dodajEpsilonPrijelaz(Automat automat, int pocetno, int sljedece) {
-		String key = pocetno + " $";
+		String key = pocetno + ",$";
 		if (!automat.prijelazi.containsKey(key)) {
 			automat.prijelazi.put(key, new Integer(sljedece).toString());
 		} else {
-			String value = automat.prijelazi.get(key) + " " + new Integer(sljedece).toString();
+			String value = automat.prijelazi.get(key) + "," + new Integer(sljedece).toString();
 			automat.prijelazi.put(key, value);
 		}
 	}
@@ -218,11 +218,11 @@ public class UtilityClass {
 	 *            Prijelazni znak.
 	 */
 	private static void dodajPrijelaz(Automat automat, int pocetno, int sljedece, char znak) {
-		String key = pocetno + " " + znak;
+		String key = pocetno + "," + znak;
 		if (!automat.prijelazi.containsKey(key)) {
 			automat.prijelazi.put(key, new Integer(sljedece).toString());
 		} else {
-			String value = automat.prijelazi.get(key) + " " + new Integer(sljedece).toString();
+			String value = automat.prijelazi.get(key) + "," + new Integer(sljedece).toString();
 			automat.prijelazi.put(key, value);
 		}
 	}
