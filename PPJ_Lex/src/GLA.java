@@ -1,4 +1,10 @@
-import java.util.*;
+import analizator.LexerRule;
+
+import java.io.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Generator for Lexical Analyzer.
@@ -23,24 +29,59 @@ public class GLA {
     private static List<String> leksickeJedinke = new ArrayList<>();
 
     /**
+     * List of lexer rules.
+     */
+    private static List<LexerRule> lexerRules = new ArrayList<>();
+
+    /**
      * Main method of the program.
      *
-     * @param args
-     *            Not used here.
+     * @param args Not used here.
      */
     public static void main(String[] args) {
-        input();
+        input(args);
+        writeLexerData();
+    }
+
+    private static void writeLexerData() {
+
+        try (ObjectOutputStream writer = new ObjectOutputStream(new FileOutputStream("regexDefinitions.obj"))) {
+            writer.writeObject(regularneDefinicije);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (ObjectOutputStream writer = new ObjectOutputStream(new FileOutputStream("statesLA.obj"))) {
+            writer.writeObject(stanjaLA);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (ObjectOutputStream writer = new ObjectOutputStream(new FileOutputStream("lexicalVariables.obj"))) {
+            writer.writeObject(leksickeJedinke);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        try (ObjectOutputStream writer = new ObjectOutputStream(new FileOutputStream("lexerRules.obj"))) {
+            writer.writeObject(lexerRules);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 
     /**
      * Reads Lexical Analyzer definition.
      */
-    private static void input() {
-        try (Scanner scanner = new Scanner(System.in)) {
-            String linija = scanner.nextLine().trim();
+    private static void input(String[] args) {
+        try (BufferedReader scanner = new BufferedReader(
+                new InputStreamReader(args.length > 0 ? new FileInputStream(args[0]) : System.in))) {
+
+            String linija;
 
             // regularne definicije
-            while (linija.startsWith("{") && scanner.hasNextLine()) {
+            while ((linija = scanner.readLine()) != null && linija.startsWith("{")) {
                 String tmp[] = linija.split(" ");
 
                 tmp[0] = tmp[0].substring(1, tmp[0].length() - 1);
@@ -49,49 +90,53 @@ public class GLA {
 
                 regularneDefinicije.put(naziv, izraz);
 
-                linija = scanner.nextLine();
-
                 System.out.println(naziv + ", " + izraz);
             }
 
             // stanja
             while (!linija.startsWith("%X")) {
-                linija = scanner.nextLine().trim();
+                linija = scanner.readLine().trim();
             }
 
             skipSplitAdd(linija, stanjaLA);
 
             // leksicke jedinke
             while (!linija.startsWith("%L")) {
-                linija = scanner.nextLine().trim();
+                linija = scanner.readLine().trim();
             }
 
             skipSplitAdd(linija, leksickeJedinke);
 
             // pravila leksickog analizatora
 
-            while (scanner.hasNextLine()) {
+            while ((linija = scanner.readLine()) != null) {
                 while (!linija.startsWith("<")) {
-                    linija = scanner.nextLine();
+                    linija = scanner.readLine();
                 }
 
                 String tmp[] = linija.split(">", 2);
 
-                String stanje = tmp[0].substring(1, tmp[0].length());
+                String stateName = tmp[0].substring(1, tmp[0].length());
                 String regDef = tmp[1];
 
-                System.out.println(stanje + "<> " + regDef);
+                regDef = expandRegularDefinition(regDef);
 
-                scanner.nextLine(); // preskoci {
+                System.out.println(stateName + "<> " + regDef);
+                LexerRule lexerRule = new LexerRule(regDef, stateName, 1, "<" + stateName + ">" + regDef);
+                lexerRules.add(lexerRule);
 
-                linija = scanner.nextLine().trim();
+                scanner.readLine(); // preskoci {
+
+                linija = scanner.readLine().trim();
                 while (!linija.equals("}")) {
                     // radi nesto s naredbom
-
-                    linija = scanner.nextLine().trim();
+                    lexerRule.addAction(linija);
+                    linija = scanner.readLine().trim();
                 }
             }
 
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
@@ -103,8 +148,7 @@ public class GLA {
      * <p>
      * {reg2} becomes (1|2|3)|4|5
      *
-     * @param regDef
-     *            regular definition to expand.
+     * @param regDef regular definition to expand.
      * @return Returns regular definition with all references expanded.
      */
     private static String expandRegularDefinition(String regDef) {
@@ -135,13 +179,10 @@ public class GLA {
 
     /**
      * Checks if character at given position is escaped with \.
-     * 
-     * @param s
-     *            String to check.
-     * @param pos
-     *            Position of character in the string.
-     * @return True if character at provided position is escaped, false
-     *         otherwise.
+     *
+     * @param s   String to check.
+     * @param pos Position of character in the string.
+     * @return True if character at provided position is escaped, false otherwise.
      */
     private static boolean isEscaped(String s, int pos) {
         if (pos < 0 || pos >= s.length()) {
@@ -166,10 +207,8 @@ public class GLA {
     /**
      * Splits given string by empty spaces and adds all but first to given list.
      *
-     * @param s
-     *            String to split.
-     * @param list
-     *            List to add split strings to.
+     * @param s    String to split.
+     * @param list List to add split strings to.
      */
     private static void skipSplitAdd(String s, List<String> list) {
         String tmp[] = s.split(" ");

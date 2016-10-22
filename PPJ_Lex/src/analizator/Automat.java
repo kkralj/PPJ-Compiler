@@ -239,9 +239,9 @@ public class Automat implements Serializable {
                 zadnje_stanje = b;
             }
             dodajEpsilonPrijelaz(zadnje_stanje, desno_stanje);
-            this.lijevo_stanje = lijevo_stanje;
-            this.desno_stanje = desno_stanje;
         }
+        this.lijevo_stanje = lijevo_stanje;
+        this.desno_stanje = desno_stanje;
 
     }
 

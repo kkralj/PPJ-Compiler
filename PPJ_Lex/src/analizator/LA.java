@@ -1,22 +1,50 @@
 package analizator;
 
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class LA {
 
-    private List<LexerRule> lexerRules = new ArrayList<>();
     private List<Automat> automationList = new ArrayList<>();
+
+    private Map<String, String> regexDefinitions;
+    private List<String> lexerStates, lexerVariables;
+    private List<LexerRule> lexerRules;
 
     private String source;
 
     public LA(final String sourceCode) {
         this.source = sourceCode;
         generateLexerRules();
+        loadDefinitions();
+    }
+
+    private void loadDefinitions() {
+        try (ObjectInputStream reader = new ObjectInputStream(new FileInputStream("regexDefinitions.obj"))) {
+            this.regexDefinitions = (Map<String, String>) reader.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        try (ObjectInputStream reader = new ObjectInputStream(new FileInputStream("statesLA.obj"))) {
+            this.lexerStates = (List<String>) reader.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        try (ObjectInputStream reader = new ObjectInputStream(new FileInputStream("lexicalVariables.obj"))) {
+            this.lexerVariables = (List<String>) reader.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        try (ObjectInputStream reader = new ObjectInputStream(new FileInputStream("lexerRules.obj"))) {
+            this.lexerRules = (List<LexerRule>) reader.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            e.printStackTrace();
+        }
 
     }
 
@@ -60,18 +88,19 @@ public class LA {
     }
 
     private String lexerState;
-    private int currentLine = 0;
+    private Integer currentLine = 1;
+    private String bufferedString;
 
     public void generateTokens() {
-        lexerState = "S_jedan";
+        lexerState = lexerStates.get(0);
 
-        String bufferedString = "";
+        bufferedString = "";
 
         for (int i = 0; i < source.length(); i++) {
             char current = source.charAt(i);
             bufferedString += current;
 
-            boolean atLeastOneStateValid = hasAtLeastOneState(bufferedString);
+            boolean atLeastOneStateValid = hasAtLeastOneState(lexerState, bufferedString);
 
             if (atLeastOneStateValid) {
                 continue; // hope to find even better solution so just continue
@@ -84,44 +113,26 @@ public class LA {
                 /* temporarily remove last char and return it later */
                 bufferedString = bufferedString.substring(0, bufferedString.length() - 1);
 
-                LexerRule rule = findBestRule(bufferedString);
+                LexerRule rule = findBestRule(lexerState, bufferedString);
 
                 /* error recovery */
                 if (rule == null) {
-                    System.out.println("Error while processing ->" + bufferedString + "<-");
+//                    System.out.println("Error while processing ->" + bufferedString + "<-");
 
-                    LexerRule prefixRule = bestPrefixRule(bufferedString);
+                    LexerRule prefixRule = bestPrefixRule(lexerState, bufferedString);
 
                     if (prefixRule == null) {
-                        System.err.println("Error char: ->" + bufferedString.charAt(0) + "<-");
+//                        System.err.println("Error char: ->" + bufferedString.charAt(0) + "<-");
                         bufferedString = bufferedString.substring(1);
                     } else {
-                        LexerRule.MatchState prefixMatchState = prefixRule.getMatchState(bufferedString);
-
-                        System.out.println("Match length: " + prefixMatchState.getMatchLength());
-                        System.out.println("Match: ->" + bufferedString.substring(0, prefixMatchState.getMatchLength()) + "<-");
-                        System.out.println("Rule name: " + prefixRule.getName());
-                        System.out.println();
-
-                        lexerState = prefixRule.getName();
-                        bufferedString = bufferedString.substring(prefixMatchState.getMatchLength());
+                        completeActions(prefixRule);
                     }
 
                     i--; // start again
                     continue;
 
                 } else {
-                    System.out.println("Considering string: ->" + bufferedString + "<-");
-
-                    LexerRule.MatchState matchState = rule.getMatchState(bufferedString);
-                    System.out.println("Match length: " + matchState.getMatchLength());
-
-                    System.out.println("Match: ->" + bufferedString.substring(0, matchState.getMatchLength()) + "<-");
-                    System.out.println("Rule name: " + rule.getName());
-                    System.out.println();
-
-                    lexerState = rule.getName();
-                    bufferedString = bufferedString.substring(matchState.getMatchLength());
+                    completeActions(rule);
                 }
 
 
@@ -130,23 +141,106 @@ public class LA {
         }
     }
 
-    private LexerRule bestPrefixRule(String input) {
+    private void completeActions(LexerRule rule) {
+        // lexerState, bufferedString, currentLine
+
+//        System.out.println("Considering string: ->" + bufferedString + "<-");
+
+        LexerRule.MatchState matchState = rule.getMatchState(bufferedString);
+
+//        System.out.println("Match length: " + matchState.getMatchLength());
+//        System.out.println("Match: ->" + bufferedString.substring(0, matchState.getMatchLength()) + "<-");
+//        System.out.println("Rule name: " + rule.getName());
+//        System.out.println();
+
+        boolean vratiSeActionUsed = false;
+        String match = bufferedString.substring(0, matchState.getMatchLength());
+
+        List<String> actions = rule.getActions();
+
+        if (actions.contains("NOVI_REDAK")) {
+            currentLine++;
+        }
+
+        for (String action : actions) {
+            if (action.startsWith("VRATI_SE ")) {
+                action = action.substring("VRATI_SE ".length());
+                vratiSeActionUsed = true;
+                match = bufferedString.substring(0, Integer.parseInt(action));
+                bufferedString = bufferedString.substring(Integer.parseInt(action));
+
+            }
+        }
+
+        for (String action : actions) {
+            if (action.startsWith("UDJI_U_STANJE ")) {
+                action = action.substring("UDJI_U_STANJE ".length());
+                lexerState = action;
+            }
+        }
+
+        for (String action : actions) {
+            if (lexerVariables.contains(action)) {
+                String output = action + " " + currentLine + " " + match;
+                if (output.equals("OP_PRIDRUZI 27 =")) {
+                    System.out.print("");
+                }
+                System.out.println(output);
+            }
+        }
+
+//        for (String action : rule.getActions()) {
+//            action = action.trim();
+//            if (action.equals("NOVI_REDAK")) {
+//                currentLine++;
+//
+//            } else if (action.startsWith("UDJI_U_STANJE ")) {
+//                action = action.substring("UDJI_U_STANJE ".length());
+//                lexerState = action;
+//
+//            } else if (action.startsWith("VRATI_SE ")) {
+//                action = action.substring("VRATI_SE ".length());
+//                vratiSeActionUsed = true;
+//                match = bufferedString.substring(0, Integer.parseInt(action));
+//                bufferedString = bufferedString.substring(Integer.parseInt(action));
+//
+//            } else if (lexerVariables.contains(action)) {
+//                String output = action + " " + currentLine + " " + match;
+//                if (output.equals("OPERAND 2 3")) {
+//                    System.out.println("iduci");
+//                }
+//                System.out.println(output);
+//
+//            }
+//        }
+
+
+        if (!vratiSeActionUsed) {
+            bufferedString = bufferedString.substring(matchState.getMatchLength());
+        }
+
+    }
+
+    private LexerRule bestPrefixRule(String currentState, String input) {
         int bestLen = 0;
         LexerRule bestRule = null;
 
         for (int i = 0; i < input.length(); i++) {
             for (LexerRule lexerRule : lexerRules) {
-                int curLen = lexerRule.getMatchState(input.substring(0, i + 1)).getMatchLength();
-                if (curLen > bestLen) {
-                    bestLen = curLen;
-                    bestRule = lexerRule;
+                if (lexerRule.getState().equals(currentState)) {
+                    LexerRule.MatchState matchState = lexerRule.getMatchState(input.substring(0, i + 1));
+                    int curLen = matchState.getMatchLength();
+                    if (curLen > bestLen && matchState.isFullyMatched()) {
+                        bestLen = curLen;
+                        bestRule = lexerRule;
+                    }
                 }
             }
         }
         return bestRule;
     }
 
-    private LexerRule findBestRule(String bufferedString) {
+    private LexerRule findBestRule(String currentState, String bufferedString) {
         if (bufferedString.isEmpty()) {
             return null;
         }
@@ -155,15 +249,17 @@ public class LA {
         int bestLength = -1, bestPriority = -1;
 
         for (LexerRule lexerRule : lexerRules) {
-            LexerRule.MatchState matchState = lexerRule.getMatchState(bufferedString);
-            if (matchState.isFullyMatched()) {
-                int length = matchState.getMatchLength();
-                int priority = lexerRule.getPriority();
+            if (lexerRule.getState().equals(currentState)) {
+                LexerRule.MatchState matchState = lexerRule.getMatchState(bufferedString);
+                if (matchState.isFullyMatched()) {
+                    int length = matchState.getMatchLength();
+                    int priority = lexerRule.getPriority();
 
-                if (length > bestLength || (length == bestLength && priority > bestPriority)) {
-                    bestLength = length;
-                    bestPriority = priority;
-                    bestRule = lexerRule;
+                    if (length > bestLength || (length == bestLength && priority > bestPriority)) {
+                        bestLength = length;
+                        bestPriority = priority;
+                        bestRule = lexerRule;
+                    }
                 }
             }
         }
@@ -171,16 +267,23 @@ public class LA {
         return bestRule;
     }
 
-    private boolean hasAtLeastOneState(String bufferedString) {
+    private boolean hasAtLeastOneState(String currentState, String bufferedString) {
         for (LexerRule lexerRule : lexerRules) {
-            if (lexerRule.getMatchState(bufferedString).getMatchLength() > 0) {
-                return true;
+            if (lexerRule.getRegexDefinition().startsWith("((0|1|2|3|4|5|6|")) {
+//                System.out.println("tu");
+            }
+            if (lexerRule.getState().equals(currentState)) {
+                LexerRule.MatchState matchState = lexerRule.getMatchState(bufferedString);
+                if (matchState.getMatchLength() == bufferedString.length()) {
+                    return true;
+                }
             }
         }
         return false;
     }
 
     public static void main(String[] args) throws IOException {
+
         StringBuilder sourceCode = new StringBuilder();
         BufferedReader bi = new BufferedReader(
                 new InputStreamReader(args.length > 0 ? new FileInputStream(args[0]) : System.in)
@@ -198,4 +301,5 @@ public class LA {
         // TODO: read serialized Automat objects here and store it in the list automationList
 
     }
+
 }
