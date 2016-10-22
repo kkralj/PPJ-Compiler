@@ -109,7 +109,7 @@ public class Automat implements Serializable {
         TreeSet<String> okolina = new TreeSet<>();
         for (String entry : pocetno) {
             okolina.add(entry);
-            String prijelaz = entry.concat(",$");
+            String prijelaz = entry.concat(",$$");
             String novaStanja = prijelazi.get(prijelaz);
 
             if (novaStanja != null) {
@@ -304,7 +304,7 @@ public class Automat implements Serializable {
      * @param sljedece Sljedece stanje.
      */
     private void dodajEpsilonPrijelaz(int pocetno, int sljedece) {
-        String key = pocetno + ",$";
+        String key = pocetno + ",$$";
         if (!prijelazi.containsKey(key)) {
             prijelazi.put(key, new Integer(sljedece).toString());
         } else {
