@@ -182,9 +182,9 @@ public class LA {
         for (String action : actions) {
             if (lexerVariables.contains(action)) {
                 String output = action + " " + currentLine + " " + match;
-                if (output.equals("OP_PRIDRUZI 27 =")) {
-                    System.out.print("");
-                }
+                //if (output.equals("OP_PRIDRUZI 27 =")) {
+                //    System.out.print("");
+                //}
                 System.out.println(output);
             }
         }

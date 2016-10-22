@@ -36,7 +36,8 @@ public class GLA {
     /**
      * Main method of the program.
      *
-     * @param args Not used here.
+     * @param args
+     *            Not used here.
      */
     public static void main(String[] args) {
         input(args);
@@ -90,7 +91,7 @@ public class GLA {
 
                 regularneDefinicije.put(naziv, izraz);
 
-                System.out.println(naziv + ", " + izraz);
+                //System.out.println(naziv + ", " + izraz);
             }
 
             // stanja
@@ -121,14 +122,14 @@ public class GLA {
 
                 regDef = expandRegularDefinition(regDef);
 
-                System.out.println(stateName + "<> " + regDef);
+                //System.out.println(stateName + "<> " + regDef);
                 LexerRule lexerRule = new LexerRule(regDef, stateName, 1, "<" + stateName + ">" + regDef);
                 lexerRules.add(lexerRule);
 
                 scanner.readLine(); // preskoci {
 
                 linija = scanner.readLine().trim();
-                while (!linija.equals("}")) {
+                while (linija != null && scanner.ready() && !linija.equals("}")) {
                     // radi nesto s naredbom
                     lexerRule.addAction(linija);
                     linija = scanner.readLine().trim();
@@ -148,7 +149,8 @@ public class GLA {
      * <p>
      * {reg2} becomes (1|2|3)|4|5
      *
-     * @param regDef regular definition to expand.
+     * @param regDef
+     *            regular definition to expand.
      * @return Returns regular definition with all references expanded.
      */
     private static String expandRegularDefinition(String regDef) {
@@ -180,9 +182,12 @@ public class GLA {
     /**
      * Checks if character at given position is escaped with \.
      *
-     * @param s   String to check.
-     * @param pos Position of character in the string.
-     * @return True if character at provided position is escaped, false otherwise.
+     * @param s
+     *            String to check.
+     * @param pos
+     *            Position of character in the string.
+     * @return True if character at provided position is escaped, false
+     *         otherwise.
      */
     private static boolean isEscaped(String s, int pos) {
         if (pos < 0 || pos >= s.length()) {
@@ -207,8 +212,10 @@ public class GLA {
     /**
      * Splits given string by empty spaces and adds all but first to given list.
      *
-     * @param s    String to split.
-     * @param list List to add split strings to.
+     * @param s
+     *            String to split.
+     * @param list
+     *            List to add split strings to.
      */
     private static void skipSplitAdd(String s, List<String> list) {
         String tmp[] = s.split(" ");
@@ -216,7 +223,7 @@ public class GLA {
         for (int i = 1; i < tmp.length; i++) {
             list.add(tmp[i]);
 
-            System.out.println(tmp[i]);
+            //System.out.println(tmp[i]);
         }
     }
 
