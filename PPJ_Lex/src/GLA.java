@@ -243,7 +243,6 @@ public class GLA {
     // char ss[] = s.toCharArray();
     //
     // for (int i = 0; i < ss.length; i++) {
-    // // slučaj \\
     // if (ss[i] == '\\') {
     // if (ss[i + 1] == 'n') {
     // sb.append('\n');

@@ -3,14 +3,15 @@ package analizator;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class LexerRule implements Serializable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     private String state; // probably not required
-    private Pattern pattern;
-    private Matcher matcher;
     private int priority;
     private String name; // rule name
     private String regexDefinition;
@@ -20,8 +21,8 @@ public class LexerRule implements Serializable {
     private List<String> actions = new ArrayList<>();
 
     public LexerRule(String regex, String state, int priority, String name) {
-//        this.pattern = Pattern.compile(regex);
-//        this.matcher = pattern.matcher("");
+        // this.pattern = Pattern.compile(regex);
+        // this.matcher = pattern.matcher("");
         this.regexDefinition = regex;
         this.priority = priority;
         this.state = state;
@@ -52,16 +53,16 @@ public class LexerRule implements Serializable {
 
     public MatchState getMatchState(String input) {
         return regexAutomat.isValidInput(input);
-//
-//        matcher.reset(input);
-//
-//        if (matcher.matches()) {
-//            return new MatchState(input.length(), true);
-//        } else if (matcher.hitEnd()) {
-//            return new MatchState(input.length(), false);
-//        } else {
-//            return new MatchState(0, false);
-//        }
+        //
+        // matcher.reset(input);
+        //
+        // if (matcher.matches()) {
+        // return new MatchState(input.length(), true);
+        // } else if (matcher.hitEnd()) {
+        // return new MatchState(input.length(), false);
+        // } else {
+        // return new MatchState(0, false);
+        // }
     }
 
     public String getState() {

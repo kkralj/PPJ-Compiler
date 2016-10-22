@@ -12,6 +12,11 @@ import java.util.Map.Entry;
  */
 public class Automat implements Serializable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    
     public int lijevo_stanje;// pocetno stanje automata
     public int desno_stanje;// krajnje prihvatljivo stanje automata
     /**
@@ -199,7 +204,6 @@ public class Automat implements Serializable {
                             dodajPrijelaz(a, b, tmpIzraz[i]);
                         }
                     } else {
-                        // slučaj 2b
                         int j = i;
                         int brojOtvorenihZagrada = 0;
                         // trazim odgovarajucu zatvorenu zagradu
@@ -246,8 +250,8 @@ public class Automat implements Serializable {
     }
 
     /**
-     * Pomoćna metoda koja provjerava da li je znak na zadanom indeksu operator
-     * tj. ako nije onda je prefiksiran. Valjda ju je Niđo dobro napisao :)
+     * Pomocna metoda koja provjerava da li je znak na zadanom indeksu operator
+     * tj. ako nije onda je prefiksiran. Valjda ju je Nidjo dobro napisao :)
      *
      * @param regex Regularni izraz
      * @param index Indeks znaka
@@ -265,8 +269,8 @@ public class Automat implements Serializable {
     }
 
     /**
-     * Pomoćna metoda koja rastavlja početni regularni izraz na podizraze. Niđo
-     * ju je također pisao valjda je dobro napisana.
+     * Pomocna metoda koja rastavlja pocetni regularni izraz na podizraze. Nidjo
+     * ju je takodjer pisao valjda je dobro napisana.
      *
      * @param regex Izraz kojeg rastavljamo.
      * @return Listu podizraza.
@@ -296,8 +300,8 @@ public class Automat implements Serializable {
     }
 
     /**
-     * Pomoćna metoda koja dodaje u automat prijelaz.Ovdje je epsilon prijelaz
-     * pa je zu prijelazni znak jednak znaku $.
+     * Pomocna metoda koja dodaje u automat prijelaz.Ovdje je epsilon prijelaz
+     * pa je zu prijelazni znak jednak znaku $$.
      *
      * @param automat  Automat
      * @param pocetno  Trenutno stanje.
@@ -314,7 +318,7 @@ public class Automat implements Serializable {
     }
 
     /**
-     * Pomoćna metoda koja dodaje u automat prijelaz.
+     * Pomocna metoda koja dodaje u automat prijelaz.
      *
      * @param automat  Automat
      * @param pocetno  Trenutno stanje.
