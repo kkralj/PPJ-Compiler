@@ -3,6 +3,7 @@ package analizator;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LexerRule implements Serializable {
 
@@ -21,8 +22,6 @@ public class LexerRule implements Serializable {
     private List<String> actions = new ArrayList<>();
 
     public LexerRule(String regex, String state, int priority, String name) {
-        // this.pattern = Pattern.compile(regex);
-        // this.matcher = pattern.matcher("");
         this.regexDefinition = regex;
         this.priority = priority;
         this.state = state;
@@ -31,8 +30,18 @@ public class LexerRule implements Serializable {
         this.regexAutomat = new Automat(regex);
     }
 
+    public LexerRule(String state, int priority) {
+        this.state = state;
+        this.priority = priority;
+        this.regexAutomat = new Automat();
+    }
+
     public void addAction(String action) {
         actions.add(action);
+    }
+
+    public Automat getRegexAutomat() {
+        return regexAutomat;
     }
 
     public List<String> getActions() {
@@ -53,16 +62,6 @@ public class LexerRule implements Serializable {
 
     public MatchState getMatchState(String input) {
         return regexAutomat.isValidInput(input);
-        //
-        // matcher.reset(input);
-        //
-        // if (matcher.matches()) {
-        // return new MatchState(input.length(), true);
-        // } else if (matcher.hitEnd()) {
-        // return new MatchState(input.length(), false);
-        // } else {
-        // return new MatchState(0, false);
-        // }
     }
 
     public String getState() {
@@ -89,4 +88,19 @@ public class LexerRule implements Serializable {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(state).append('\n');
+        sb.append(priority).append('\n');
+
+        sb.append(actions.stream().collect(Collectors.joining(",")));
+
+        sb.append('\n');
+
+        sb.append(regexAutomat);
+
+        return sb.toString();
+    }
 }

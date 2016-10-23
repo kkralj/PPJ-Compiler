@@ -1,8 +1,15 @@
 package analizator;
 
 import java.io.Serializable;
-import java.util.*;
-import java.util.Map.Entry;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 /**
  * Razred koji definira automat.
@@ -16,9 +23,9 @@ public class Automat implements Serializable {
      * 
      */
     private static final long serialVersionUID = 1L;
-    
-    public int lijevo_stanje;// pocetno stanje automata
-    public int desno_stanje;// krajnje prihvatljivo stanje automata
+
+    public int startState;// pocetno stanje automata
+    public int acceptableState;// krajnje prihvatljivo stanje automata
     /**
      * Kao na utr-u pohranjujem prijlaze na nacin da je kljuc oblika
      * "trenutnostanje prijelazniznak" a vrijednost "novostanje". Mada ce ova
@@ -35,20 +42,14 @@ public class Automat implements Serializable {
 
     public Automat(String regex) {
         pretvori(regex);
-        stanja.add(Integer.toString(lijevo_stanje));
+    }
+
+    public Automat() {
     }
 
     public void reset() {
         stanja.clear();
-        stanja.add(Integer.toString(lijevo_stanje));
-    }
-
-    public boolean next(String znak) {
-        stanja = napraviPrijelaz(stanja, znak);
-
-        stanja.addAll(epsilonOkolina(stanja));
-
-        return stanja.contains(Integer.toString(desno_stanje));
+        stanja.add(Integer.toString(startState));
     }
 
     public LexerRule.MatchState isValidInput(String input) {
@@ -57,7 +58,7 @@ public class Automat implements Serializable {
 
     private LexerRule.MatchState izvrsiAutomat(String ulazniNiz) {
         TreeSet<String> pocetno = new TreeSet<>();
-        pocetno.add(String.valueOf(lijevo_stanje));
+        pocetno.add(String.valueOf(startState));
         int povratak = 1;
         while (true) {
             pocetno = epsilonOkolina(pocetno);
@@ -68,7 +69,7 @@ public class Automat implements Serializable {
         }
 
         if (ulazniNiz.length() == 0) {
-            return new LexerRule.MatchState(ulazniNiz.length(), pocetno.contains(String.valueOf(desno_stanje)));
+            return new LexerRule.MatchState(ulazniNiz.length(), pocetno.contains(String.valueOf(acceptableState)));
         }
 
         String[] znakovi = ulazniNiz.split("");
@@ -92,7 +93,7 @@ public class Automat implements Serializable {
 
         }
 
-        return new LexerRule.MatchState(ulazniNiz.length(), pocetno.contains(String.valueOf(desno_stanje)));
+        return new LexerRule.MatchState(ulazniNiz.length(), pocetno.contains(String.valueOf(acceptableState)));
     }
 
     private TreeSet<String> napraviPrijelaz(Set<String> poc, String znak) {
@@ -145,8 +146,10 @@ public class Automat implements Serializable {
     /**
      * Metoda koja pretvara regularni izraz u automat
      *
-     * @param izraz   Regularni izraz.
-     * @param automat Objekt automat.
+     * @param izraz
+     *            Regularni izraz.
+     * @param automat
+     *            Objekt automat.
      */
     private void pretvori(String izraz) {
         // rastavljaje regularnog izraza na podizraze
@@ -159,8 +162,8 @@ public class Automat implements Serializable {
         if (izbori.size() != 0) {
             for (String izbor : izbori) {
                 pretvori(izbor);
-                dodajEpsilonPrijelaz(lijevo_stanje, this.lijevo_stanje);
-                dodajEpsilonPrijelaz(this.desno_stanje, desno_stanje);
+                dodajEpsilonPrijelaz(lijevo_stanje, this.startState);
+                dodajEpsilonPrijelaz(this.acceptableState, desno_stanje);
             }
         } else {
             boolean prefiksirano = false;
@@ -219,8 +222,8 @@ public class Automat implements Serializable {
                             }
                         } while (true);
                         pretvori(new String(tmpIzraz, i + 1, j - i - 1));
-                        a = this.lijevo_stanje;
-                        b = this.desno_stanje;
+                        a = this.startState;
+                        b = this.acceptableState;
                         i = j;
                     }
                 }
@@ -244,8 +247,8 @@ public class Automat implements Serializable {
             }
             dodajEpsilonPrijelaz(zadnje_stanje, desno_stanje);
         }
-        this.lijevo_stanje = lijevo_stanje;
-        this.desno_stanje = desno_stanje;
+        this.startState = lijevo_stanje;
+        this.acceptableState = desno_stanje;
 
     }
 
@@ -253,8 +256,10 @@ public class Automat implements Serializable {
      * Pomocna metoda koja provjerava da li je znak na zadanom indeksu operator
      * tj. ako nije onda je prefiksiran. Valjda ju je Nidjo dobro napisao :)
      *
-     * @param regex Regularni izraz
-     * @param index Indeks znaka
+     * @param regex
+     *            Regularni izraz
+     * @param index
+     *            Indeks znaka
      * @return Je li znak operator.
      */
     private static boolean je_operator(String regex, int index) {
@@ -272,7 +277,8 @@ public class Automat implements Serializable {
      * Pomocna metoda koja rastavlja pocetni regularni izraz na podizraze. Nidjo
      * ju je takodjer pisao valjda je dobro napisana.
      *
-     * @param regex Izraz kojeg rastavljamo.
+     * @param regex
+     *            Izraz kojeg rastavljamo.
      * @return Listu podizraza.
      */
     private static List<String> rastaviizraz(String regex) {
@@ -303,9 +309,12 @@ public class Automat implements Serializable {
      * Pomocna metoda koja dodaje u automat prijelaz.Ovdje je epsilon prijelaz
      * pa je zu prijelazni znak jednak znaku $$.
      *
-     * @param automat  Automat
-     * @param pocetno  Trenutno stanje.
-     * @param sljedece Sljedece stanje.
+     * @param automat
+     *            Automat
+     * @param pocetno
+     *            Trenutno stanje.
+     * @param sljedece
+     *            Sljedece stanje.
      */
     private void dodajEpsilonPrijelaz(int pocetno, int sljedece) {
         String key = pocetno + ",$$";
@@ -318,31 +327,60 @@ public class Automat implements Serializable {
     }
 
     /**
-     * Pomocna metoda koja dodaje u automat prijelaz.
+     * Metoda koja dodaje u automat prijelaz.
      *
-     * @param automat  Automat
-     * @param pocetno  Trenutno stanje.
-     * @param sljedece Sljedece stanje.
-     * @param znak     Prijelazni znak.
+     * @param automat
+     *            Automat
+     * @param pocetno
+     *            Trenutno stanje.
+     * @param sljedece
+     *            Sljedece stanje.
+     * @param znak
+     *            Prijelazni znak.
      */
-    private void dodajPrijelaz(int pocetno, int sljedece, char znak) {
-        String key = pocetno + "," + znak;
+    public void dodajPrijelaz(int pocetno, int sljedece, char znak) {
+        dodajPrijelaz(pocetno, sljedece, Character.toString(znak));
+    }
+
+    /**
+     * Metoda koja dodaje u automat prijelaz.
+     *
+     * @param automat
+     *            Automat
+     * @param pocetno
+     *            Trenutno stanje.
+     * @param sljedece
+     *            Sljedece stanje.
+     * @param znak
+     *            Prijelazni znak.
+     */
+    public void dodajPrijelaz(int pocetno, int sljedece, String s) {
+        String key = pocetno + "," + s;
         if (!prijelazi.containsKey(key)) {
             prijelazi.put(key, new Integer(sljedece).toString());
         } else {
-            String value = prijelazi.get(key) + "," + new Integer(sljedece).toString();
+            String value = prijelazi.get(key) + "," + Integer.toString(sljedece);
             prijelazi.put(key, value);
         }
     }
 
+    public void setStartState(int startState) {
+        this.startState = startState;
+    }
+
+    public void setAcceptableState(int acceptableState) {
+        this.acceptableState = acceptableState;
+    }
+
     @Override
     public String toString() {
-        StringBuilder string = new StringBuilder();
-        string.append("Pocetno stanje: " + lijevo_stanje + '\n');
-        string.append("Konacno prihvatljivo: " + desno_stanje + "\n");
-        for (Entry<String, String> prijelaz : prijelazi.entrySet()) {
-            string.append(prijelaz.getKey() + "->" + prijelaz.getValue() + "\n");
-        }
-        return string.toString();
+        StringBuilder sb = new StringBuilder();
+        sb.append(startState).append('\n');
+        sb.append(acceptableState).append('\n');
+
+        sb.append(prijelazi.entrySet().stream().map(entry -> entry.getKey() + "->" + entry.getValue())
+                .collect(Collectors.joining("\n")));
+
+        return sb.toString();
     }
 }
