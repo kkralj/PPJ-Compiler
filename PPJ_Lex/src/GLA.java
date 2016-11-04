@@ -1,13 +1,5 @@
 import java.io.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -40,8 +32,7 @@ public class GLA {
     /**
      * Main method of the program.
      *
-     * @param args
-     *            Not used here.
+     * @param args Not used here.
      */
     public static void main(String[] args) {
         input(args);
@@ -169,8 +160,7 @@ public class GLA {
      * <p>
      * {reg2} becomes (1|2|3)|4|5
      *
-     * @param regDef
-     *            regular definition to expand.
+     * @param regDef regular definition to expand.
      * @return Returns regular definition with all references expanded.
      */
     private static String expandRegularDefinition(String regDef) {
@@ -202,12 +192,9 @@ public class GLA {
     /**
      * Checks if character at given position is escaped with \.
      *
-     * @param s
-     *            String to check.
-     * @param pos
-     *            Position of character in the string.
-     * @return True if character at provided position is escaped, false
-     *         otherwise.
+     * @param s   String to check.
+     * @param pos Position of character in the string.
+     * @return True if character at provided position is escaped, false otherwise.
      */
     private static boolean isEscaped(String s, int pos) {
         if (pos < 0 || pos >= s.length()) {
@@ -232,10 +219,8 @@ public class GLA {
     /**
      * Splits given string by empty spaces and adds all but first to given list.
      *
-     * @param s
-     *            String to split.
-     * @param list
-     *            List to add split strings to.
+     * @param s    String to split.
+     * @param list List to add split strings to.
      */
     private static void skipSplitAdd(String s, List<String> list) {
         String tmp[] = s.split(" ");
@@ -246,7 +231,7 @@ public class GLA {
             // System.out.println(tmp[i]);
         }
     }
-    
+
     /**
      * Razred koji definira automat.
      *
@@ -256,7 +241,7 @@ public class GLA {
     public static class Automat implements Serializable {
 
         /**
-         * 
+         *
          */
         private static final long serialVersionUID = 1L;
 
@@ -382,10 +367,8 @@ public class GLA {
         /**
          * Metoda koja pretvara regularni izraz u automat
          *
-         * @param izraz
-         *            Regularni izraz.
-         * @param automat
-         *            Objekt automat.
+         * @param izraz   Regularni izraz.
+         * @param automat Objekt automat.
          */
         private void pretvori(String izraz) {
             // rastavljaje regularnog izraza na podizraze
@@ -492,10 +475,8 @@ public class GLA {
          * Pomocna metoda koja provjerava da li je znak na zadanom indeksu operator
          * tj. ako nije onda je prefiksiran. Valjda ju je Nidjo dobro napisao :)
          *
-         * @param regex
-         *            Regularni izraz
-         * @param index
-         *            Indeks znaka
+         * @param regex Regularni izraz
+         * @param index Indeks znaka
          * @return Je li znak operator.
          */
         private static boolean je_operator(String regex, int index) {
@@ -513,8 +494,7 @@ public class GLA {
          * Pomocna metoda koja rastavlja pocetni regularni izraz na podizraze. Nidjo
          * ju je takodjer pisao valjda je dobro napisana.
          *
-         * @param regex
-         *            Izraz kojeg rastavljamo.
+         * @param regex Izraz kojeg rastavljamo.
          * @return Listu podizraza.
          */
         private static List<String> rastaviizraz(String regex) {
@@ -545,12 +525,9 @@ public class GLA {
          * Pomocna metoda koja dodaje u automat prijelaz.Ovdje je epsilon prijelaz
          * pa je zu prijelazni znak jednak znaku $$.
          *
-         * @param automat
-         *            Automat
-         * @param pocetno
-         *            Trenutno stanje.
-         * @param sljedece
-         *            Sljedece stanje.
+         * @param automat  Automat
+         * @param pocetno  Trenutno stanje.
+         * @param sljedece Sljedece stanje.
          */
         private void dodajEpsilonPrijelaz(int pocetno, int sljedece) {
             String key = pocetno + ",$$";
@@ -565,14 +542,10 @@ public class GLA {
         /**
          * Metoda koja dodaje u automat prijelaz.
          *
-         * @param automat
-         *            Automat
-         * @param pocetno
-         *            Trenutno stanje.
-         * @param sljedece
-         *            Sljedece stanje.
-         * @param znak
-         *            Prijelazni znak.
+         * @param automat  Automat
+         * @param pocetno  Trenutno stanje.
+         * @param sljedece Sljedece stanje.
+         * @param znak     Prijelazni znak.
          */
         public void dodajPrijelaz(int pocetno, int sljedece, char znak) {
             dodajPrijelaz(pocetno, sljedece, Character.toString(znak));
@@ -581,14 +554,10 @@ public class GLA {
         /**
          * Metoda koja dodaje u automat prijelaz.
          *
-         * @param automat
-         *            Automat
-         * @param pocetno
-         *            Trenutno stanje.
-         * @param sljedece
-         *            Sljedece stanje.
-         * @param znak
-         *            Prijelazni znak.
+         * @param automat  Automat
+         * @param pocetno  Trenutno stanje.
+         * @param sljedece Sljedece stanje.
+         * @param znak     Prijelazni znak.
          */
         public void dodajPrijelaz(int pocetno, int sljedece, String s) {
             String key = pocetno + "," + s;
@@ -621,11 +590,11 @@ public class GLA {
         }
     }
 
-    
+
     public static class LexerRule implements Serializable {
 
         /**
-         * 
+         *
          */
         private static final long serialVersionUID = 1L;
 
