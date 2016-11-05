@@ -29,6 +29,13 @@ public class GSA {
 
 	private static Map<String, String> transitions = new HashMap<>();
 
+	private static Map<String, String> dkaTransitions = new LinkedHashMap<>();
+
+	/**
+	 * Each state of dka with his LRitems.
+	 */
+	private static List<TreeSet<String>> dkaState = new ArrayList<>();
+
 	/**
 	 * zapocinje skup za svaki znak
 	 */
@@ -59,8 +66,94 @@ public class GSA {
 		System.out.println();
 		for (Entry<String, String> entry : transitions.entrySet()) {
 			System.out.println(entry.getKey() + " => " + entry.getValue());
-		} 
+		}
 
+		transformENKaToDKA();
+		System.out.println(dkaState.size());
+		// System.out.println(processed.size());
+		// System.out.println(processed);
+
+	}
+
+	private static void transformENKaToDKA() {
+		TreeSet<String> allChars= new TreeSet<>();
+		allChars.addAll(terminal);
+		allChars.addAll(nonTerminal);
+		String firstLRItem = LRItems.get(0);
+		LRItem item = new LRItem(firstLRItem);
+		item.start.add("#");
+		TreeSet<String> poc = new TreeSet<>();
+		poc.add(item.toString());
+		int povratak = 1;
+		while (true) {
+			poc = epsilonOkolina(poc);
+			if (poc.size() == povratak) {
+				break;
+			}
+			povratak = poc.size();
+		}
+
+		dkaState.add(poc);
+		int i = 0;
+		while (i < dkaState.size()) {
+			TreeSet<String> tmpState = dkaState.get(i);
+			TreeSet<String> tmp;
+			for (String entry : allChars) {
+				tmp = napraviPrijelaz(tmpState, entry);
+				if (tmp.size() != 0) {
+					povratak = tmp.size();
+					while (true) {
+						tmp = epsilonOkolina(tmp);
+						if (tmp.size() == povratak) {
+							break;
+						}
+						povratak = tmp.size();
+					}
+					if (!dkaState.contains(tmp)) {
+						dkaState.add(tmp);
+					}
+					dkaTransitions.put(i + "," + entry, dkaState.indexOf(tmp) + "");
+				}
+			}
+			
+			i++;
+		}
+	}
+
+	/**
+	 * Copy-pejstano iz labosa UTR-a
+	 */
+	private static TreeSet<String> napraviPrijelaz(TreeSet<String> poc, String znak) {
+		TreeSet<String> povratni = new TreeSet<>();
+		for (String entry : poc) {
+			String prijelaz = entry.concat(":" + znak);
+
+			String novaStanja = transitions.get(prijelaz);
+
+			if (novaStanja != null) {
+				String[] fieldNova = novaStanja.split(";");
+				povratni.addAll(Arrays.asList(fieldNova));
+			}
+		}
+		return povratni;
+	}
+
+	/**
+	 * copy pejstano iz labosa UTR-a
+	 */
+	private static TreeSet<String> epsilonOkolina(TreeSet<String> pocetno) {
+		TreeSet<String> okolina = new TreeSet<>();
+		for (String entry : pocetno) {
+			okolina.add(entry);
+			String prijelaz = entry.concat(":$");
+			String novaStanja = transitions.get(prijelaz);
+
+			if (novaStanja != null) {
+				String[] fieldNova = novaStanja.split(";");
+				okolina.addAll(Arrays.asList(fieldNova));
+			}
+		}
+		return okolina;
 	}
 
 	private static void generateENKA() {
@@ -73,13 +166,15 @@ public class GSA {
 
 		while (list.size() != 0) {
 			LRItem LRitem = list.remove(0);
+			if (processed.contains(LRitem.toString())) {
+				continue;
+			}
 			String[] tmp = LRitem.item.split("\\*");
 			if (tmp.length == 1) {
+				processed.add(LRitem.toString());
 				continue;
 			}
-			if (processed.contains(LRitem.item)) {
-				continue;
-			}
+
 			String[] tmp1 = tmp[1].trim().split(" ", 2);
 			String newItem = tmp[0].trim() + " " + tmp1[0] + " *";
 			if (tmp1.length == 2) {
@@ -89,7 +184,7 @@ public class GSA {
 			newLRItem.start.addAll(LRitem.start);
 			list.add(newLRItem);
 			LRItemsWithStart.put(newLRItem.item, newLRItem.start);
-			transitions.put(LRitem.item + "," + tmp1[0], newLRItem.item);
+			transitions.put(LRitem.toString() + ":" + tmp1[0], newLRItem.toString());
 
 			if (nonTerminal.contains(tmp1[0])) {
 				String start = tmp1[0] + " -> *";
@@ -113,22 +208,27 @@ public class GSA {
 						}
 						list.add(newLRItem);
 						LRItemsWithStart.put(newLRItem.item, newLRItem.start);
-						if (transitions.containsKey(LRitem.item + ",$")) {
-							String value = transitions.get(LRitem.item + ",$") + "," + newLRItem.item;
-							transitions.put(LRitem.item + ",$", value);
+						if (transitions.containsKey(LRitem.toString() + ":$")) {
+							String value = transitions.get(LRitem.toString() + ":$") + ";" + newLRItem.toString();
+							transitions.put(LRitem.toString() + ":$", value);
 						} else {
-							transitions.put(LRitem.item + ",$", newLRItem.item);
+							transitions.put(LRitem.toString() + ":$", newLRItem.toString());
 						}
 					}
 				}
 			}
-			processed.add(LRitem.item);
+			processed.add(LRitem.toString());
 		}
 
 	}
 
 	private static void generateLRitems() {
 		for (String nonTerminal : productions.keySet()) {
+			if (nonTerminal.equals("<%>")) {
+				LRItems.add(0, nonTerminal + " -> " + productions.get(nonTerminal).trim() + " *");
+				LRItems.add(0, nonTerminal + " -> * " + productions.get(nonTerminal).trim());
+				continue;
+			}
 			String tmp[] = productions.get(nonTerminal).split("\\|");
 			for (String entry : tmp) {
 				if (entry.equals("$")) {
@@ -354,6 +454,17 @@ public class GSA {
 		public LRItem(String item) {
 			super();
 			this.item = item;
+		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append(item + ", {");
+			for (String entry : start) {
+				builder.append(" " + entry);
+			}
+			builder.append(" }");
+			return builder.toString();
 		}
 
 	}
