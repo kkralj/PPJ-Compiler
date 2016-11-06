@@ -17,8 +17,8 @@ public class GSA {
 	 * production) is associated with several groups of characters(right side of
 	 * production) separated by character '|'.
 	 */
-	private static Map<String, String> productions = new HashMap<>();
-
+	private static Map<String, String> productions = new LinkedHashMap<>();
+	private static List<String> allProductions = new ArrayList<>();
 	private static List<String> emptyNonTerminal = new ArrayList<>();
 	/**
 	 * Za ključ je ovdje stavljeno LR stavka dok je vrijednost pridružen nekakav
@@ -67,16 +67,98 @@ public class GSA {
 		for (Entry<String, String> entry : transitions.entrySet()) {
 			System.out.println(entry.getKey() + " => " + entry.getValue());
 		}
-
-		transformENKaToDKA();
-		System.out.println(dkaState.size());
 		// System.out.println(processed.size());
+		transformENKaToDKA();
+		System.out.println();
+		createLRtable();
+		// System.out.println(dkaState.size());
+
 		// System.out.println(processed);
 
 	}
 
+	private static void createLRtable() {
+
+		TreeSet<String> allTerminal = new TreeSet<>();
+		allTerminal.addAll(terminal);
+		allTerminal.add("#");
+		TreeSet<String> allNonTerminal = new TreeSet<>();
+		allNonTerminal.addAll(nonTerminal);
+		allNonTerminal.add("<%>");
+		List<String> allChars = new ArrayList<>();
+		allChars.addAll(allTerminal);
+		allChars.addAll(allNonTerminal);
+		int n = dkaState.size();
+		int m = allChars.size();
+		String[][] matrix = new String[n][m];
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) {
+				matrix[i][j] = "-";
+			}
+		}
+
+		System.out.println("SVI ZNAKOVI: SVAKI STUPAC MATRICE JE PRIDRUZEN OVIM ZNAKOVIMA U OVOM REDOSLIJEDU!!!!");
+		StringBuilder builder = new StringBuilder();
+		for (String entry : allChars) {
+			builder.append(entry + " ");
+		}
+		System.out.println(builder.toString());
+		System.out.println("=========================================================");
+		System.out.println();
+		for (int i = 0; i < n; i++) {
+			// find complete LRitems
+			int min = -1;
+			for (String item : dkaState.get(i)) {
+				String[] tmp = item.split(",");
+				if (tmp[0].trim().endsWith("*")) {
+					min = allProductions.indexOf(tmp[0].substring(0, tmp[0].length() - 2));
+				}
+				if (tmp[0].trim().endsWith("-> *")) {
+					tmp[0] = tmp[0].substring(0, tmp[0].length() - 1);
+					tmp[0] += "$";
+					min = allProductions.indexOf(tmp[0]);
+				}
+			}
+			if (min != -1) {
+				String tmp = allProductions.get(min);
+				if (tmp.endsWith("$")) {
+					tmp = tmp.substring(0, tmp.length() - 2);
+				}
+				tmp += " *";
+				for (String sign : LRItemsWithStart.get(tmp)) {
+					matrix[i][allChars.indexOf(sign)] = allProductions.get(min);
+					if (min == 0) {
+						matrix[i][allChars.indexOf(sign)] = "Prihvati";
+					}
+				}
+
+			}
+
+			for (String entry : allChars) {
+				String newState = dkaTransitions.get(i + "," + entry);
+				if (newState == null) {
+					// matrix[i][allChars.indexOf(entry)]="-";
+				} else {
+					if (allTerminal.contains(entry)) {
+						matrix[i][allChars.indexOf(entry)] = "p" + newState;
+					} else {
+						matrix[i][allChars.indexOf(entry)] = "s" + newState;
+					}
+				}
+			}
+		}
+
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < m; j++) {
+				System.out.print(matrix[i][j] + "\t");
+			}
+			System.out.println();
+		}
+
+	}
+
 	private static void transformENKaToDKA() {
-		TreeSet<String> allChars= new TreeSet<>();
+		TreeSet<String> allChars = new TreeSet<>();
 		allChars.addAll(terminal);
 		allChars.addAll(nonTerminal);
 		String firstLRItem = LRItems.get(0);
@@ -115,7 +197,7 @@ public class GSA {
 					dkaTransitions.put(i + "," + entry, dkaState.indexOf(tmp) + "");
 				}
 			}
-			
+
 			i++;
 		}
 	}
@@ -400,6 +482,7 @@ public class GSA {
 			line = scanner.readLine();
 			// add start production as stated in the instruction
 			productions.put("<%>", nonTerminal.get(0));
+			allProductions.add("<%> -> " + nonTerminal.get(0).trim());
 			while (line != null) {
 				if (!line.startsWith(" ")) {
 					String key = line;
@@ -408,6 +491,7 @@ public class GSA {
 						line = scanner.readLine();
 						if (line != null && line.startsWith(" ")) {
 							line = line.substring(1);
+							allProductions.add(key + " -> " + line);
 							value += line + "|";
 						} else {
 							if (productions.containsKey(key)) {
