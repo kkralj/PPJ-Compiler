@@ -385,7 +385,8 @@ public class GSA {
 				} else {
 					matrix[allChars.indexOf(nonTerminal)][allChars.indexOf(entry.split(" ")[0])] = true;
 					String[] tmp2 = entry.split(" ");
-					for (int i = 0; i < tmp2.length; i++) {
+					
+					for (int i = 0; i < tmp2.length - 1; i++) {
 						if (emptyNonTerminal.contains(tmp2[i])) {
 							matrix[allChars.indexOf(nonTerminal)][allChars.indexOf(tmp2[i + 1])] = true;
 						}else{
