@@ -367,6 +367,11 @@ public class GSA {
 		allChars.addAll(terminal);
 		int n = allChars.size();
 		boolean[][] matrix = new boolean[n][n];
+
+		for (String entry : allChars) {
+			System.out.print(entry + " ");
+		}
+		System.out.println();
 		// reflexivity
 		for (int i = 0; i < n; i++) {
 			matrix[i][i] = true;
@@ -379,8 +384,26 @@ public class GSA {
 					continue;
 				} else {
 					matrix[allChars.indexOf(nonTerminal)][allChars.indexOf(entry.split(" ")[0])] = true;
+					String[] tmp2 = entry.split(" ");
+					for (int i = 0; i < tmp2.length; i++) {
+						if (emptyNonTerminal.contains(tmp2[i])) {
+							matrix[allChars.indexOf(nonTerminal)][allChars.indexOf(tmp2[i + 1])] = true;
+						}else{
+							break;
+						}
+					}
 				}
 			}
+		}
+		for (int i = 0; i < n; i++) {
+			for (int j = 0; j < n; j++) {
+				if (matrix[i][j]) {
+					System.out.print(1 + " ");
+				} else {
+					System.out.print(0 + " ");
+				}
+			}
+			System.out.println();
 		}
 		int x = nonTerminal.size();
 		while (true) {
