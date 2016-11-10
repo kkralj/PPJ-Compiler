@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import org.omg.Messaging.SyncScopeHelper;
-
 import analizator.SA.SyntaxTree.Node;
 
 public class SA {
@@ -48,9 +46,7 @@ public class SA {
 
             int state = states.peek();
 
-            String[] LRRow = LRTable.get(state + 1);
-
-            String action = LRRow[LRColumn(token)];
+            String action = getAction(token, state);
 
             if (action.equals("Prihvati")) {
                 // korijen sintaksnog stabla
@@ -61,7 +57,7 @@ public class SA {
                 // pomakni
 
                 // napravi novi cvor (list)
-                Node tokenNode = new Node(tokenData);
+                Node tokenNode = new Node(tokenData, state);
 
                 nodes.push(tokenNode);
                 states.push(Integer.parseInt(action.substring(1)));
@@ -74,12 +70,12 @@ public class SA {
 
                 // novi unutarnji cvor (nezavrsni znak)
 
-                Node productionNode = new Node(splitAction[0]);
+                Node productionNode = new Node(splitAction[0], state);
                 List<Node> nodeList = new ArrayList<Node>();
 
                 if (productionTokens.length == 1 && productionTokens[0].equals("$")) {
                     // u slucaju epsilon produkcije nista ne skidamo sa stoga
-                    productionNode.addChild(new Node("$"));
+                    productionNode.addChild(new Node("$", state));
                 } else {
                     for (int j = 0; j < productionTokens.length; j++) {
                         states.pop();
@@ -101,13 +97,22 @@ public class SA {
 
                 // nismo obradili trenutni ulazni znak
                 i--;
+
             } else {
                 // odbaci, nadji sinkronizacijski znak
-                i++;
+
+                // System.err.println("Error! " + tokenData);
+
                 while (i < tokens.size()) {
-                    String newToken = tokens.get(i).split(" ", 2)[0].trim();
-                    if (syncTokens.contains(newToken)) {
+                    String nextToken = tokens.get(i).split(" ", 2)[0].trim();
+                    if (syncTokens.contains(nextToken)) {
+                        // pop stack until you find defined action
+                        // i++ in the next for iteration
+
+                        findLastValidToken(states, nodes, nextToken);
+
                         i--;
+
                         break;
                     }
                     i++;
@@ -116,6 +121,41 @@ public class SA {
         }
 
         return syntaxTree;
+    }
+
+    /**
+     * Searches through syntax to find last token for which valid action is
+     * defined.
+     * 
+     * @param states
+     *            state stack.
+     * @param nodes
+     *            node stack.
+     */
+    private void findLastValidToken(Stack<Integer> states, Stack<Node> nodes, String syncToken) {
+        Node node = nodes.peek();
+        int state = states.peek();
+
+        while (!checkNode(node, state, syncToken)) {
+            nodes.pop();
+            states.pop();
+            node = nodes.peek();
+            state = states.peek();
+        }
+    }
+
+    private boolean checkNode(Node node, int state, String syncToken) {
+        String action = getAction(syncToken, state);
+
+        return !action.equals("-");
+
+    }
+
+    private String getAction(String token, int state) {
+        String[] LRRow = LRTable.get(state + 1);
+        int LRCol = LRColumn(token);
+
+        return LRRow[LRCol];
     }
 
     private int LRColumn(String token) {
@@ -178,10 +218,12 @@ public class SA {
 
         public static class Node {
             private String data;
+            private int state;
             private List<Node> children = new ArrayList<Node>();
 
-            public Node(String data) {
+            public Node(String data, int state) {
                 this.data = data.trim();
+                this.state = state;
             }
 
             /**
