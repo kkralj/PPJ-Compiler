@@ -182,7 +182,7 @@ public class SA {
         try (BufferedReader scanner = new BufferedReader(
                 new InputStreamReader(args.length > 0 ? new FileInputStream(args[0]) : System.in))) {
 
-            tokens = scanner.lines().collect(Collectors.toList());
+            tokens = scanner.lines().filter(line -> !line.isEmpty()).collect(Collectors.toList());
         } catch (Exception e) {
             e.printStackTrace();
         }
