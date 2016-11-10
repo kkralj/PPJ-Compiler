@@ -19,7 +19,7 @@ public class SA {
     private List<String[]> LRTable = new ArrayList<>();
     private List<String> syncTokens = new ArrayList<>();
 
-    private SyntaxTree syntaxTree;
+    private SyntaxTree syntaxTree = new SyntaxTree();
 
     private Stack<Node> nodes;
     private Stack<Integer> states;
@@ -136,11 +136,13 @@ public class SA {
         Node node = nodes.peek();
         int state = states.peek();
 
-        while (!checkNode(node, state, syncToken)) {
+        while (states.size() > 1 && !checkNode(node, state, syncToken)) {
             nodes.pop();
             states.pop();
-            node = nodes.peek();
-            state = states.peek();
+            if (!nodes.isEmpty() && !states.isEmpty()) {
+                node = nodes.peek();
+                state = states.peek();
+            }
         }
     }
 
