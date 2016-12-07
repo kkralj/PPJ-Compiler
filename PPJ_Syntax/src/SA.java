@@ -129,11 +129,12 @@ public class SA {
     private List<String> findExpectedTokens(int state) {
         List<String> expectedTokens = new ArrayList<>();
 
+        String[] LRheader = LRTable.get(0);
         String[] LRrow = LRTable.get(state + 1);
 
-        for (int i = 0; i < LRrow.length && !LRrow[i].startsWith("<"); i++) {
-            if (!LRrow[i].equals("-")) {
-                expectedTokens.add(LRTable.get(0)[i]);
+        for (int i = 0; i < LRrow.length; i++) {
+            if (!LRrow[i].equals("-") && !LRheader[i].startsWith("<")) {
+                expectedTokens.add(LRheader[i]);
             }
         }
 
