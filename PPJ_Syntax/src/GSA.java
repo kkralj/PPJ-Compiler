@@ -1,6 +1,7 @@
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -107,8 +108,7 @@ public class GSA {
             }
         }
 
-        try (BufferedWriter writer = Files.newBufferedWriter(Paths.get("sa.data"), StandardOpenOption.CREATE,
-                StandardOpenOption.TRUNCATE_EXISTING)) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter("sa.data"))) {
 
             StringBuilder builder = new StringBuilder();
             for (String entry : allChars) {

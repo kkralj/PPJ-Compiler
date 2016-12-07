@@ -1,7 +1,7 @@
-package analizator;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
@@ -11,8 +11,6 @@ import java.util.List;
 import java.util.Stack;
 import java.util.stream.Collectors;
 
-import analizator.SA.SyntaxTree.Node;
-
 public class SA {
 
     private List<String> tokens;
@@ -21,7 +19,7 @@ public class SA {
 
     private SyntaxTree syntaxTree = new SyntaxTree();
 
-    private Stack<Node> nodes;
+    private Stack<SyntaxTree.Node> nodes;
     private Stack<Integer> states;
 
     public SA(String[] args) {
@@ -29,7 +27,7 @@ public class SA {
     }
 
     private SyntaxTree parse() {
-        nodes = new Stack<Node>();
+        nodes = new Stack<SyntaxTree.Node>();
         states = new Stack<Integer>();
 
         // pocetno stanje
@@ -50,14 +48,14 @@ public class SA {
 
             if (action.equals("Prihvati")) {
                 // korijen sintaksnog stabla
-                Node root = nodes.pop();
+                SyntaxTree.Node root = nodes.pop();
 
                 syntaxTree = new SyntaxTree(root);
             } else if (action.startsWith("p")) {
                 // pomakni
 
                 // napravi novi cvor (list)
-                Node tokenNode = new Node(tokenData, state);
+                SyntaxTree.Node tokenNode = new SyntaxTree.Node(tokenData, state);
 
                 nodes.push(tokenNode);
                 states.push(Integer.parseInt(action.substring(1)));
@@ -70,12 +68,12 @@ public class SA {
 
                 // novi unutarnji cvor (nezavrsni znak)
 
-                Node productionNode = new Node(splitAction[0], state);
-                List<Node> nodeList = new ArrayList<Node>();
+                SyntaxTree.Node productionNode = new SyntaxTree.Node(splitAction[0], state);
+                List<SyntaxTree.Node> nodeList = new ArrayList<SyntaxTree.Node>();
 
                 if (productionTokens.length == 1 && productionTokens[0].equals("$")) {
                     // u slucaju epsilon produkcije nista ne skidamo sa stoga
-                    productionNode.addChild(new Node("$", state));
+                    productionNode.addChild(new SyntaxTree.Node("$", state));
                 } else {
                     for (int j = 0; j < productionTokens.length; j++) {
                         states.pop();
@@ -101,7 +99,12 @@ public class SA {
             } else {
                 // odbaci, nadji sinkronizacijski znak
 
-                // System.err.println("Error! " + tokenData);
+                String line = tokenData.split(" ")[1];
+                System.err.println("Error on line " + line + "!");
+
+                System.err.println("Got '" + tokenData.split(" ")[2] + "', but was expecting some of:");
+
+                findExpectedTokens(state).forEach(System.err::println);
 
                 while (i < tokens.size()) {
                     String nextToken = tokens.get(i).split(" ", 2)[0].trim();
@@ -123,6 +126,20 @@ public class SA {
         return syntaxTree;
     }
 
+    private List<String> findExpectedTokens(int state) {
+        List<String> expectedTokens = new ArrayList<>();
+
+        String[] LRrow = LRTable.get(state + 1);
+
+        for (int i = 0; i < LRrow.length && !LRrow[i].startsWith("<"); i++) {
+            if (!LRrow[i].equals("-")) {
+                expectedTokens.add(LRTable.get(0)[i]);
+            }
+        }
+
+        return expectedTokens;
+    }
+
     /**
      * Searches through syntax to find last token for which valid action is
      * defined.
@@ -132,8 +149,8 @@ public class SA {
      * @param nodes
      *            node stack.
      */
-    private void findLastValidToken(Stack<Integer> states, Stack<Node> nodes, String syncToken) {
-        Node node = nodes.peek();
+    private void findLastValidToken(Stack<Integer> states, Stack<SyntaxTree.Node> nodes, String syncToken) {
+        SyntaxTree.Node node = nodes.peek();
         int state = states.peek();
 
         while (states.size() > 1 && !checkNode(node, state, syncToken)) {
@@ -146,7 +163,7 @@ public class SA {
         }
     }
 
-    private boolean checkNode(Node node, int state, String syncToken) {
+    private boolean checkNode(SyntaxTree.Node node, int state, String syncToken) {
         String action = getAction(syncToken, state);
 
         return !action.equals("-");
@@ -189,7 +206,7 @@ public class SA {
 
         // LR(1) table
 
-        try (BufferedReader reader = Files.newBufferedReader(Paths.get("sa.data"))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("sa.data"))) {
             reader.lines().forEachOrdered(line -> LRTable.add(line.split("\t")));
 
             int size = LRTable.size();
@@ -205,12 +222,12 @@ public class SA {
     }
 
     public static class SyntaxTree {
-        private Node root;
+        private SyntaxTree.Node root;
 
         public SyntaxTree() {
         }
 
-        public SyntaxTree(Node root) {
+        public SyntaxTree(SyntaxTree.Node root) {
             this.root = root;
         }
 
@@ -221,7 +238,7 @@ public class SA {
         public static class Node {
             private String data;
             private int state;
-            private List<Node> children = new ArrayList<Node>();
+            private List<SyntaxTree.Node> children = new ArrayList<SyntaxTree.Node>();
 
             public Node(String data, int state) {
                 this.data = data.trim();
@@ -237,12 +254,12 @@ public class SA {
             public void print(int level) {
                 System.out.println(whitespace(level) + data);
 
-                for (Node node : children) {
+                for (SyntaxTree.Node node : children) {
                     node.print(level + 1);
                 }
             }
 
-            public void addChild(Node child) {
+            public void addChild(SyntaxTree.Node child) {
                 children.add(child);
             }
 
