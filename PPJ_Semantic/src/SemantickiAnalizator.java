@@ -109,5 +109,4 @@ public class SemantickiAnalizator {
             e.printStackTrace();
         }
     }
-
 }

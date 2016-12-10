@@ -8,10 +8,10 @@ RESULT="";
 for f in $(find $TEST_FOLDER_PATH -name '*.san'); do 
 java -cp $CLASS_FOLDER_PATH GSA < $f > /dev/null;
 java -cp $CLASS_FOLDER_PATH analizator.SA < ${f: :-4}".in" > $SOURCE_FOLDER_PATH/out.txt 2>&1;
-RESULT=$(diff $SOURCE_FOLDER_PATH/out.txt ${f: :-4}".out" -q);
+RESULT=$(diff $SOURCE_FOLDER_PATH/out.txt ${f: :-4}".out" -q -b);
 if [[ $RESULT = *[!\ ]* ]]; then
-  echo "ERROR: "${f::-8};
-  break;
+  echo "ERROR: "${f::-8}"  !!!!!!!!!!!!!!!!";
+  #break;
 else
   echo "PASSED:"${f::-8};
 fi
