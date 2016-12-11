@@ -8,7 +8,7 @@ public class SyntaxTree {
         Node node = null;
 
         for (String line : lines) {
-            int nodeDepth = node != null ? countPrefixSpace(node.data) : -1;
+            int nodeDepth = node != null ? countPrefixSpace(node.getData()) : -1;
             int currentDepth = countPrefixSpace(line);
 
             if (node == null) {
@@ -21,17 +21,17 @@ public class SyntaxTree {
 
             } else {
                 for (int i = 0; i < nodeDepth - currentDepth; i++) {
-                    node = node.parent;
+                    node = node.getParent();
                 }
 
-                Node child = new Node(line, node.parent);
-                node.parent.addChild(child);
+                Node child = new Node(line, node.getParent());
+                node.getParent().addChild(child);
                 node = child;
             }
         }
 
-        while (node.parent != null) {
-            node = node.parent;
+        while (node.getParent() != null) {
+            node = node.getParent();
         }
 
         return this.root = cleanSyntaxTree(node);
@@ -48,9 +48,9 @@ public class SyntaxTree {
     }
 
     private Node cleanSyntaxTree(Node root) {
-        root.data = root.data.trim();
+        root.setData(root.getData().trim());
 
-        for (Node node : root.children) {
+        for (Node node : root.getChildren()) {
             cleanSyntaxTree(node);
         }
 

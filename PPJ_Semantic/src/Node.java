@@ -3,9 +3,13 @@ import java.util.List;
 
 public class Node {
 
-    public String data;
-    public Node parent;
-    public List<Node> children = new ArrayList<Node>();
+    private String data;
+    private Node parent;
+    private List<Node> children = new ArrayList<>();
+
+    private String type;
+    private boolean leftOK;
+
 
     public Node(String data, Node parent) {
         this.data = data;
@@ -30,6 +34,26 @@ public class Node {
             res += " ";
         }
         return res;
+    }
+
+    public void setData(String data) {
+        this.data = data;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public boolean isLeftOK() {
+        return leftOK;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setLeftOK(boolean leftOK) {
+        this.leftOK = leftOK;
     }
 
     public String getData() {

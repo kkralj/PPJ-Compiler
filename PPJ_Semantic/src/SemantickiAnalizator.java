@@ -12,11 +12,15 @@ public class SemantickiAnalizator {
 
             SyntaxTree syntaxTree = new SyntaxTree();
             syntaxTree.build(br.lines().collect(Collectors.toList()));
-            syntaxTree.getRoot().print(0);
+//            syntaxTree.getRoot().print(0);
+
+            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(syntaxTree);
+            semanticAnalyzer.analyze();
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
+
 }
