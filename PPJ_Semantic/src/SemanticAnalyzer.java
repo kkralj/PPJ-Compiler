@@ -1,29 +1,51 @@
 public class SemanticAnalyzer {
 
     private SyntaxTree syntaxTree;
+    private Context context;
 
     public SemanticAnalyzer(SyntaxTree syntaxTree) {
         this.syntaxTree = syntaxTree;
     }
 
     public void analyze() {
+        this.context = new Context(null); // global context, no parent
         fillNodes(syntaxTree.getRoot());
     }
 
     private void fillNodes(Node root) {
+        boolean assignedContext = checkContext(root); // pokusaj dodijeliti kontekst
+
         for (Node child : root.getChildren()) {
             fillNodes(child);
         }
 
         /* ispis produkcija, za debugging... */
-        String productionName = root.getData() + " ::= ";
-        for (Node child : root.getChildren()) {
-            productionName += child.getData() + " ";
-        }
-        productionName = productionName.trim();
-        System.out.println(productionName);
+//        String productionName = root.getData() + " ::= ";
+//        for (Node child : root.getChildren()) {
+//            productionName += child.getData() + " ";
+//        }
+//        productionName = productionName.trim();
+//        System.out.println(productionName);
 
         completeActions(root);
+
+        if (assignedContext) { // izlazimo iz konteksta pošto je produkcija gotova
+            this.context = this.context.getParent();
+        }
+    }
+
+    /**
+     * Returns true if new context got assigned to the given Node.
+     */
+    private boolean checkContext(Node root) { // TODO: ovo treba nadopuniti
+        String rootName = root.getData();
+
+        if (rootName.equals("<slozena naredba>") || rootName.equals("<vanjska_deklaracija>")) {
+            this.context = new Context(this.context); // change current context to new one
+            return true;
+        }
+
+        return false;
     }
 
     private void completeActions(Node root) {
@@ -191,116 +213,90 @@ public class SemanticAnalyzer {
     }
 
     private void lista_deklaracija(Node root) {
-
     }
 
     private void deklaracija_parametra(Node root) {
-
     }
 
     private void deklaracija(Node root) {
-
     }
 
     private void lista_init_deklaratora(Node root) {
-
     }
 
     private void init_deklarator(Node root) {
     }
 
     private void izravni_deklarator(Node root) {
-
     }
 
     private void inicijalizator(Node root) {
-
     }
 
     private void lista_izraza_pridruzivanja(Node root) {
-
     }
 
     private void lista_parametara(Node root) {
-
     }
 
     private void definicija_funkcije(Node root) {
     }
 
     private void naredba_skoka(Node root) {
-
     }
 
     private void naredba_petlje(Node root) {
-
     }
 
     private void vanjska_deklaracija(Node root) {
-
     }
 
     private void prijevodna_jedinica(Node root) {
-
     }
 
     private void naredba_grananja(Node root) {
-
     }
 
     private void izraz_naredba(Node root) {
-
     }
 
     private void naredba(Node root) {
-
     }
 
     private void lista_naredbi(Node root) {
-
     }
 
     private void slozena_naredba(Node root) {
-
     }
 
     private void izraz(Node root) {
-
     }
 
     private void log_ili_izraz(Node root) {
-
     }
 
     private void log_i_izraz(Node root) {
-
     }
 
     private void bin_ili_izraz(Node root) {
-
     }
 
     private void bin_xili_izraz(Node root) {
     }
 
     private void izraz_pridruzivanja(Node root) {
-
     }
 
     private void bin_i_izraz(Node root) {
-
     }
 
     private void jednakosni_izraz(Node root) {
-
     }
 
     private void odnosni_izraz(Node root) {
-
     }
 
     private void aditivni_izraz(Node root) {
-
     }
 
     private void multiplikativni_izraz(Node root) {
@@ -460,7 +456,6 @@ public class SemanticAnalyzer {
         }
 
     }
-
 
     /**
      * Nezavršni znak <primarni_izraz> generira najjednostavnije izraze koji se sastoje od
