@@ -1,3 +1,5 @@
+import java.util.Arrays;
+
 public class SemanticAnalyzer {
 
     private SyntaxTree syntaxTree;
@@ -25,7 +27,7 @@ public class SemanticAnalyzer {
 //            productionName += child.getData() + " ";
 //        }
 //        productionName = productionName.trim();
-//        System.out.println(productionName);
+//        System.out.println("Obilazim:  " + productionName);
 
         completeActions(root);
 
@@ -240,9 +242,42 @@ public class SemanticAnalyzer {
     }
 
     private void definicija_funkcije(Node root) {
+//        <definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA KR_VOID D_ZAGRADA <slozena_naredba>
+//	                              | <ime_tipa> IDN L_ZAGRADA <lista_parametara> D_ZAGRADA <slozena_naredba>
+
+        if (root.getChildren().get(3).getData().startsWith("KR_VOID")) {
+            Node ime_tipa = root.getChildren().get(0);
+            Node slozena_naredba = root.getChildren().get(5);
+
+//            1. provjeri (<ime_tipa>)
+//            2. <ime_tipa>.tip != const(T )
+//            3. ne postoji prije definirana funkcija imena IDN.ime
+//            4. ako postoji deklaracija imena IDN.ime u globalnom djelokrugu onda je pripadni
+//            tip te deklaracije funkcija(void → <ime_tipa>.tip)
+//            5. zabilježi definiciju i deklaraciju funkcije
+//            6. provjeri (<slozena_naredba>)
+
+        } else {
+
+        }
     }
 
+    /**
+     * Nezavršni znak <naredba_skoka> generira continue, break i return naredbe.
+     */
     private void naredba_skoka(Node root) {
+//        <naredba_skoka> ::= KR_CONTINUE TOCKAZAREZ
+//               	| KR_BREAK TOCKAZAREZ
+//              	| KR_RETURN TOCKAZAREZ
+//	                | KR_RETURN <izraz> TOCKAZAREZ
+
+        if (root.getChildren().size() == 3 && root.getChildren().get(1).getData().equals("<izraz>")) {
+//            1. provjeri (<izraz>)
+//            2. naredba se nalazi unutar funkcije tipa funkcija(params → pov ) i vrijedi <izraz>.tip ∼ pov
+
+        }
+
+
     }
 
     private void naredba_petlje(Node root) {
@@ -261,48 +296,185 @@ public class SemanticAnalyzer {
     }
 
     private void naredba(Node root) {
+//        <naredba> ::= <slozena_naredba>
+//                | <izraz_naredba>
+//                | <naredba_grananja>
+//                | <naredba_petlje>
+//                | <naredba_skoka>
+
+        if (root.getChildren().get(0).getData().equals("<naredba_skoka>")) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void lista_naredbi(Node root) {
+//        <lista_naredbi> ::= <naredba>
+//                | <lista_naredbi> <naredba>
+
+
     }
 
+    /**
+     * Nezavršni znak <slozena_naredba> predstavlja blok naredbi koji opcionalno počinje lis-
+     * tom deklaracija. Svaki blok je odvojeni djelokrug, a nelokalnim imenima se pristupa u
+     * ugniježdujućem bloku (i potencijalno tako dalje sve do globalnog djelokruga)
+     */
     private void slozena_naredba(Node root) {
+//    <slozena_naredba> ::= L_VIT_ZAGRADA <lista_naredbi> D_VIT_ZAGRADA
+//      	| L_VIT_ZAGRADA <lista_deklaracija> <lista_naredbi> D_VIT_ZAGRADA
+
+
     }
 
     private void izraz(Node root) {
+//        <izraz> ::= <izraz_pridruzivanja>
+//                | <izraz> ZAREZ <izraz_pridruzivanja>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void log_ili_izraz(Node root) {
+//        <log_ili_izraz> ::= <log_i_izraz>
+//                | <log_ili_izraz> OP_ILI <log_i_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void log_i_izraz(Node root) {
+//        <log_i_izraz> ::= <bin_ili_izraz>
+//                | <log_i_izraz> OP_I <bin_ili_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void bin_ili_izraz(Node root) {
+//        <bin_ili_izraz> ::= <bin_xili_izraz>
+//                | <bin_ili_izraz> OP_BIN_ILI <bin_xili_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void bin_xili_izraz(Node root) {
+//        <bin_xili_izraz> ::= <bin_i_izraz>
+//                | <bin_xili_izraz> OP_BIN_XILI <bin_i_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void izraz_pridruzivanja(Node root) {
+//        <izraz_pridruzivanja> ::= <log_ili_izraz>
+//                | <postfiks_izraz> OP_PRIDRUZI <izraz_pridruzivanja>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void bin_i_izraz(Node root) {
+//        <bin_i_izraz> ::= <jednakosni_izraz>
+//                | <bin_i_izraz> OP_BIN_I <jednakosni_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void jednakosni_izraz(Node root) {
+//        <jednakosni_izraz> ::= <odnosni_izraz>
+//                | <jednakosni_izraz> OP_EQ <odnosni_izraz>
+//                | <jednakosni_izraz> OP_NEQ <odnosni_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void odnosni_izraz(Node root) {
+//        <odnosni_izraz> ::= <aditivni_izraz>
+//                | <odnosni_izraz> OP_LT <aditivni_izraz>
+//                | <odnosni_izraz> OP_GT <aditivni_izraz>
+//                | <odnosni_izraz> OP_LTE <aditivni_izraz>
+//                | <odnosni_izraz> OP_GTE <aditivni_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
     }
 
     private void aditivni_izraz(Node root) {
+//        <aditivni_izraz> ::= <multiplikativni_izraz>
+//                | <aditivni_izraz> PLUS <multiplikativni_izraz>
+//                | <aditivni_izraz> MINUS <multiplikativni_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+
+        }
     }
 
     private void multiplikativni_izraz(Node root) {
+//        <multiplikativni_izraz> ::= <cast_izraz>
+//                | <multiplikativni_izraz> OP_PUTA <cast_izraz>
+//                | <multiplikativni_izraz> OP_DIJELI <cast_izraz>
+//                | <multiplikativni_izraz> OP_MOD <cast_izraz>
+
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
+        }
+        // TODO: THIS
     }
 
     private void specifikator_tipa(Node root) {
+        String childName = root.getChildren().get(0).getData();
+
+        if (childName.startsWith("KR_VOID")) {
+            root.setType("void");
+
+        } else if (childName.startsWith("KR_CHAR")) {
+            root.setType("char");
+
+        } else if (childName.startsWith("KR_INT")) {
+            root.setType("int");
+
+        } else {
+            throw new IllegalArgumentException("Nepostojeci <specifikator tipa>");
+
+        }
+
     }
 
     /**
@@ -315,6 +487,20 @@ public class SemanticAnalyzer {
 //       <ime_tipa> ::= <specifikator_tipa>
 //                | KR_CONST <specifikator_tipa>
 
+        if (root.getChildren().size() == 1) {
+            Node child = root.getChildren().get(0);
+            // provjeri (<specifikator_tipa>) // TODO: sta ovo radi??
+
+            if (!Arrays.asList(new String[]{"int", "char", "void"}).contains(child.getType())) { // valjda ovo?
+                throw new IllegalArgumentException("Nepostojeci <ime_tipa>");
+
+            } else {
+                root.setType(child.getType());
+            }
+
+        } else { // dopuni
+
+        }
 
     }
 
@@ -326,9 +512,10 @@ public class SemanticAnalyzer {
 //                | L_ZAGRADA <ime_tipa> D_ZAGRADA <cast_izraz>
 
         if (root.getChildren().size() == 1) {
-//            tip ← <unarni_izraz>.tip
-//            l-izraz ← <unarni_izraz>.l-izraz
-//            1. provjeri (<unarni_izraz>)
+
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
 
         } else {
 //            tip ← <ime_tipa>.tip
@@ -362,9 +549,10 @@ public class SemanticAnalyzer {
 //                | <unarni_operator> <cast_izraz>
 
         if (root.getChildren().size() == 1) {
-//            tip ← <postfiks_izraz>.tip
-//            l-izraz ← <postfiks_izraz>.l-izraz
-//            1. provjeri (<postfiks_izraz>)
+
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
 
         } else if (root.getChildren().get(0).getData().equals("OP_INC")) {
 //            tip ← int
@@ -418,6 +606,9 @@ public class SemanticAnalyzer {
 
 
         if (root.getChildren().get(0).getData().equals("<primarni_izraz>")) {
+            Node child = root.getChildren().get(0);
+            root.setType(child.getType());
+            root.setLeftOK(child.isLeftOK());
 //            tip <- <primarni_izraz>.tip
 //            l-izraz <- <primarni_izraz>.l-izraz
 //            1. provjeri(<primarni_izraz>)
@@ -470,6 +661,8 @@ public class SemanticAnalyzer {
 
         if (root.getChildren().size() == 3) {
 
+            throw new IllegalArgumentException("not implemented");
+
             // provjeri(child1 = L_ZAGRADA)
             // provjeri(child3 = D_ZAGRADA)
             // provjeri(<izraz>)
@@ -477,37 +670,49 @@ public class SemanticAnalyzer {
             // l-izraz <- <izraz>.l-izraz
 
         } else {
+
             Node child = root.getChildren().get(0);
             String childName = child.getData();
 
-            switch (childName) {
-                case "IDN": {
-//                        tip ← IDN.tip
-//                        l-izraz ← IDN.l-izraz
-//                        1. IDN.ime je deklarirano
-                    break;
+            if (childName.startsWith("IDN")) {
+
+                if (context.isDeclared(child)) {
+                    root.setType(child.getType());
+                    root.setLeftOK(child.isLeftOK());
+                } else {
+                    System.out.println(childName);
+                    throw new IllegalArgumentException("Not declared!");
                 }
-                case "BROJ": {
-//                        tip ← int
-//                        l-izraz ← 0
-//                        1. vrijednost je u rasponu tipa int
-                    break;
+
+            } else if (childName.startsWith("BROJ")) {
+
+                try {
+                    Integer.parseInt(childName.split("\\s+")[2]);
+                } catch (Exception ex) {
+                    throw new IllegalArgumentException("Number not in range!");
                 }
-                case "ZNAK": {
-//                        tip ← char
-//                        l-izraz ← 0
-//                        1. znak je ispravan po 4.3.2
-                    break;
-                }
-                case "NIZ_ZNAKOVA": {
-//                        tip ← niz (const(char))
-//                        l-izraz ← 0
-//                        1. konstantni niz znakova je ispravan po 4.3.2
-                    break;
-                }
+
+                root.setType("int");
+                root.setLeftOK(false);
+
+            } else if (childName.startsWith("CHAR")) {
+
+                // znak je ispravan po 4.3.2
+
+                root.setType("char");
+                root.setLeftOK(false);
+
+            } else if (childName.startsWith("NIZ_ZNAKOVA")) {
+
+                // konstantni niz znakova je ispravan po 4.3.2
+
+                root.setType("const(char[])");
+                root.setLeftOK(false);
+
+            } else {
+
+                throw new IllegalArgumentException("nepoznat oblik");
             }
-
-
         }
     }
 
