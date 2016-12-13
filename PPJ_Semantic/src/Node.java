@@ -10,6 +10,9 @@ public class Node {
     private String type;
     private boolean leftOK;
 
+    public boolean isFunction;
+    public boolean isConstant;
+    public boolean isArray;
 
     public Node(String data, Node parent) {
         this.data = data;
@@ -67,4 +70,6 @@ public class Node {
     public List<Node> getChildren() {
         return children;
     }
+
+
 }
