@@ -3,73 +3,74 @@ import java.util.List;
 
 public class Node {
 
-    private String data;
-    private Node parent;
-    private List<Node> children = new ArrayList<>();
+	private String label;
+	private Node parent;
+	private List<Node> children = new ArrayList<>();
 
-    private String type;
-    private boolean leftOK;
+	private SymbolInfo symbolInfo;
 
-    public boolean isFunction;
-    public boolean isConstant;
-    public boolean isArray;
+	public Node(String label, Node parent) {
+		this.label = label;
+		this.parent = parent;
+		this.symbolInfo = new SymbolInfo();
+	}
 
-    public Node(String data, Node parent) {
-        this.data = data;
-        this.parent = parent;
-    }
+	public void addChild(Node node) {
+		children.add(node);
+	}
 
-    public void addChild(Node node) {
-        children.add(node);
-    }
+	public void print(int level) {
+		System.out.println(whitespace(level) + label);
 
-    public void print(int level) {
-        System.out.println(whitespace(level) + data);
+		for (Node node : children) {
+			node.print(level + 1);
+		}
+	}
 
-        for (Node node : children) {
-            node.print(level + 1);
-        }
-    }
+	private String whitespace(int length) {
+		String res = "";
+		for (int i = 0; i < length; i++) {
+			res += " ";
+		}
+		return res;
+	}
 
-    private String whitespace(int length) {
-        String res = "";
-        for (int i = 0; i < length; i++) {
-            res += " ";
-        }
-        return res;
-    }
+	public String getProduction() {
+		String production = label + " ::=";
 
-    public void setData(String data) {
-        this.data = data;
-    }
+		for (Node child : children) {
+			production += " " + child.label;
+		}
 
-    public String getType() {
-        return type;
-    }
+		return production;
+	}
 
-    public boolean isLeftOK() {
-        return leftOK;
-    }
+	public String getTokenName() {
+		return label.split(" ")[2];
+	}
 
-    public void setType(String type) {
-        this.type = type;
-    }
+	public void setLabel(String label) {
+		this.label = label;
+	}
 
-    public void setLeftOK(boolean leftOK) {
-        this.leftOK = leftOK;
-    }
+	public String getLabel() {
+		return label;
+	}
 
-    public String getData() {
-        return data;
-    }
+	public Node getParent() {
+		return parent;
+	}
 
-    public Node getParent() {
-        return parent;
-    }
+	public SymbolInfo getSymbolInfo() {
+		return symbolInfo;
+	}
 
-    public List<Node> getChildren() {
-        return children;
-    }
+	public List<Node> getChildren() {
+		return children;
+	}
 
+	public boolean isLeaf() {
+		return children.isEmpty();
+	}
 
 }
