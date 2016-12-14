@@ -750,21 +750,21 @@ public class SemanticAnalyzer {
 				throw new SemanticAnalyserException("<primarni_izraz> ::= IDN");
 			}
 		} else if (context.isProduction("<primarni_izraz> ::= BROJ")) {
-			context.symbolInfo.dataType = DataType.INT;
+			context.symbolInfo.dataType.add(DataType.INT);
 			context.symbolInfo.l_expr = false;
 
 			if (!validIntRange(context.child.getTokenName())) {
 				throw new SemanticAnalyserException("<primarni_izraz> ::= BROJ");
 			}
 		} else if (context.isProduction("<primarni_izraz> ::= ZNAK")) {
-			context.symbolInfo.dataType = DataType.CHAR;
+			context.symbolInfo.dataType.add(DataType.CHAR);
 			context.symbolInfo.l_expr = false;
 
 			if (!validChar(context.child.getTokenName())) {
 				throw new SemanticAnalyserException("<primarni_izraz> ::= ZNAK");
 			}
 		} else if (context.isProduction("<primarni_izraz> ::= NIZ_ZNAKOVA")) {
-			context.symbolInfo.dataType = DataType.CONST_CHAR_ARRAY;
+			context.symbolInfo.dataType.add(DataType.CONST_CHAR_ARRAY);
 			context.symbolInfo.l_expr = false;
 
 			if (!validCharArray(context.child.getTokenName())) {
