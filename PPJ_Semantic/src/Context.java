@@ -3,41 +3,49 @@ import java.util.List;
 
 public class Context {
 
-    private List<Node> variables = new ArrayList<>();
+    private List<Node> contextData = new ArrayList<>();
+
     private Context parent;
 
     public Context(Context parent) {
         this.parent = parent;
     }
 
-    public void declareVariable(Node node) {
-        if (variableExists(node)) {
-            throw new IllegalArgumentException("Variable already declared.");
-        }
+//    public void declareVariable(Node node) {
+//        if (variableExists(node)) {
+//            throw new IllegalArgumentException("Variable already declared.");
+//        }
+//
+//        variables.add(node);
+//    }
 
-        variables.add(node);
-    }
-
-    public boolean isDeclared(Node node) {
+    public Node findVariable(Node node) {
         Context current = this;
 
         while (current != null) {
-            if (current.variableExists(node)) {
-                return true;
+            Node contextVariable = current.findCurrentContextVariable(node);
+            if (contextVariable != null) {
+                return contextVariable;
             }
             current = current.getParent();
         }
 
-        return false;
+        return null;
     }
 
-    private boolean variableExists(Node node) {
-        for (Node variableNode : variables) {
-            if (variableNode.getData().equals(node.getData())) {
-                return true;
+    private Node findCurrentContextVariable(Node node) {
+        String[] varParams = node.line.split("\\s+");
+
+        String nodeType = varParams[0];
+//        Integer nodeLine = Integer.parseInt(varParams[1]);
+        String nodeName = varParams[2];
+
+        for (Node variable : contextData) {
+            if (variable.variableName.equals(nodeName) && variable.isVariable && variable.variableType.equals(nodeType)) {
+                return variable;
             }
         }
-        return false;
+        return null;
     }
 
     public Context getParent() {

@@ -14,8 +14,8 @@ public class SemantickiAnalizator {
             syntaxTree.build(br.lines().collect(Collectors.toList()));
 //            syntaxTree.getRoot().print(0);
 
-            SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(syntaxTree);
-            semanticAnalyzer.analyze();
+            // SemanticAnalyzer semanticAnalyzer = new SemanticAnalyzer(syntaxTree);
+            // semanticAnalyzer.analyze();
 
         } catch (Exception e) {
             e.printStackTrace();

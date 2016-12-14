@@ -3,19 +3,80 @@ import java.util.List;
 
 public class Node {
 
-    private String data;
     private Node parent;
-    private List<Node> children = new ArrayList<>();
 
-    private String type;
-    private boolean leftOK;
+    public String line;
+
+    public boolean lSide;
+    public String type;
+
+    public String variableName;
+    public String variableType;
+
+    public List<String> argumentTypes = new ArrayList<>();
+    public List<String> argumentNames = new ArrayList<>();
+
+    public int intValue;
+    public int charValue;
+
+    public String ntip;
 
     public boolean isFunction;
     public boolean isConstant;
+    public boolean isVariable;
     public boolean isArray;
 
-    public Node(String data, Node parent) {
-        this.data = data;
+    public void setArgumentNames(String argumentName) {
+        this.argumentNames = new ArrayList<>();
+        this.argumentNames.add(argumentName);
+    }
+
+    public void setArgumentTypes(String argumentType) {
+        this.argumentTypes = new ArrayList<>();
+        this.argumentTypes.add(argumentType);
+    }
+
+    public void storeData(Node other) {
+        this.variableName = other.variableName;
+        this.variableType = other.variableType;
+
+        this.argumentTypes = other.argumentTypes;
+        this.argumentNames = other.argumentNames;
+
+        this.intValue = other.intValue;
+        this.charValue = other.charValue;
+
+        this.isFunction = other.isFunction;
+        this.isConstant = other.isConstant;
+        this.isVariable = other.isVariable;
+        this.isArray = other.isArray;
+    }
+
+
+    public boolean isValidNumber() {
+        try {
+            Integer intTest = Integer.parseInt(line.split("\\s+")[2]);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public boolean isValidChar() {
+        String charTest = line.split("\\s+")[2];
+        return false;
+    }
+
+    public boolean isValidCharArray() {
+        String charArrayTest = line.split("\\s+")[2];
+        return false;
+    }
+
+    private List<Node> children = new ArrayList<>();
+
+
+    public Node(String line, Node parent) {
+        this.line = line.trim();
         this.parent = parent;
     }
 
@@ -24,7 +85,7 @@ public class Node {
     }
 
     public void print(int level) {
-        System.out.println(whitespace(level) + data);
+        System.out.println(whitespace(level) + line);
 
         for (Node node : children) {
             node.print(level + 1);
@@ -39,29 +100,6 @@ public class Node {
         return res;
     }
 
-    public void setData(String data) {
-        this.data = data;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public boolean isLeftOK() {
-        return leftOK;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public void setLeftOK(boolean leftOK) {
-        this.leftOK = leftOK;
-    }
-
-    public String getData() {
-        return data;
-    }
 
     public Node getParent() {
         return parent;
@@ -72,4 +110,27 @@ public class Node {
     }
 
 
+    public String getLine() {
+        return line;
+    }
+
+    public void setLine(String line) {
+        this.line = line;
+    }
+
+    public boolean islSide() {
+        return lSide;
+    }
+
+    public void setlSide(boolean lSide) {
+        this.lSide = lSide;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
 }
