@@ -1,6 +1,10 @@
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 
+/**
+ * @author Mato Manovic
+ * @version 1.0
+ */
 public class SemanticAnalyzer {
 
 	private SyntaxTree syntaxTree;
@@ -711,14 +715,49 @@ public class SemanticAnalyzer {
 
 		if (context.isProduction("<postfiks_izraz> ::= <primarni_izraz>")) {
 			if (check(context.child)) {
-				context.symbolInfo.dataType = context.symbolInfo.dataType;
-				context.symbolInfo.l_expr = context.symbolInfo.l_expr;
+				context.symbolInfo.dataType = context.child.getSymbolInfo().dataType;
+				context.symbolInfo.l_expr = context.child.getSymbolInfo().l_expr;
 			} else {
 				throw new SemanticAnalyserException("<postfiks_izraz> ::= <primarni_izraz>");
 			}
 		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA")) {
-
+			Node child = node.getChildren().get(0);
+			check(child);
+			if (!child.getSymbolInfo().dataType.contains(DataType.CHAR_ARRAY)
+					&& !child.getSymbolInfo().dataType.contains(DataType.INT_ARRAY)
+					&& !child.getSymbolInfo().dataType.contains(DataType.CONST_INT_ARRAY)
+					&& !child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR_ARRAY)) {
+				throw new SemanticAnalyserException(
+						"<postfiks_izraz> ::= <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA");
+			}
+			Node child2 = node.getChildren().get(2);
+			check(child2);
+			if (!implicitInt(child.getSymbolInfo().dataType.get(0))) {
+				throw new SemanticAnalyserException(
+						"<postfiks_izraz> ::= <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA");
+			}
+			if (child.getSymbolInfo().dataType.contains(DataType.CHAR_ARRAY)) {
+				context.symbolInfo.dataType.add(DataType.CHAR);
+				context.symbolInfo.l_expr = true;
+			} else if (child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR_ARRAY)) {
+				context.symbolInfo.dataType.add(DataType.CONST_CHAR);
+				context.symbolInfo.l_expr = false;
+			} else if (child.getSymbolInfo().dataType.contains(DataType.INT_ARRAY)) {
+				context.symbolInfo.dataType.add(DataType.INT);
+				context.symbolInfo.l_expr = true;
+			} else if (child.getSymbolInfo().dataType.contains(DataType.CONST_INT_ARRAY)) {
+				context.symbolInfo.dataType.add(DataType.CONST_INT);
+				context.symbolInfo.l_expr = false;
+			}
 		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA D_ZAGRADA")) {
+			Node child = node.getChildren().get(0);
+			check(child);
+			if (!child.getSymbolInfo().symbolType.equals(SymbolType.FUNCTION)
+					&& !child.getSymbolInfo().dataType.get(0).equals(DataType.VOID)) {
+				throw new SemanticAnalyserException("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA D_ZAGRADA");
+			}
+			context.symbolInfo.dataType.add(DataType.VOID);
+			context.symbolInfo.l_expr = false;
 
 		} else if (context
 				.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA <lista_argumenata> D_ZAGRADA")) {
@@ -824,6 +863,19 @@ public class SemanticAnalyzer {
 
 	private static boolean implicitInt(DataType dataType) {
 		return dataType == DataType.CHAR || dataType == DataType.INT;
+	}
+
+	/**
+	 * Provjeravam vrijedi li relacija X~Y tj. moze li se X pretvorit implicitno
+	 * u Y ili obrnuto.
+	 * 
+	 * @param dataType1
+	 * @param dataType2
+	 * @return
+	 */
+	private static boolean implicit(DataType dataType1, DataType dataType2) {
+		if(dataType1.equals(DataType.CHAR)&&dataType2.equals(DataType.INT));
+		//TODO
 	}
 
 	private static boolean validIntRange(String value) {
