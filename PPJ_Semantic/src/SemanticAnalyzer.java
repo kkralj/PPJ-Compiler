@@ -11,6 +11,7 @@ import java.util.Stack;
 public class SemanticAnalyzer {
 
 	private static final int MAX_ARRAY_SIZE = 1024;
+	private static final char[] escapableChars = { 't', 'n', '0', '\'', '"', '\\' };
 
 	private SyntaxTree syntaxTree;
 	private Scope scope;
@@ -1456,12 +1457,61 @@ public class SemanticAnalyzer {
 		}
 	}
 
-	private static boolean validChar(String value) {
-		return (value.length() == 3 && asciiEncoder.canEncode(value.charAt(1)))
-				|| (value.length() == 4 && value.matches("'\\[tn0'\"]'"));
+	private boolean arrayContains(char[] array, char c) {
+		boolean contains = false;
+
+		for (int i = 0; i < array.length && !contains; i++) {
+			if (array[i] == c)
+				contains = true;
+		}
+
+		return contains;
 	}
 
-	private static boolean validCharArray(String value) {
-		return asciiEncoder.canEncode(value.subSequence(1, value.length() - 1));
+	private boolean validChar(String value) {
+		int len = value.length();
+
+		if (len < 3 || len > 4)
+			return false;
+
+		if (value.length() == 4) {
+			if (value.charAt(1) != '\\')
+				return false;
+
+			return arrayContains(escapableChars, value.charAt(2));
+		}
+
+		return (value.length() == 3 && asciiEncoder.canEncode(value.charAt(1)));
+	}
+
+	public boolean isEscaped(String s, int index) {
+		int count = 0;
+
+		index--;
+
+		while (index >= 0 && s.charAt(index) == '\\') {
+			count++;
+			index--;
+		}
+
+		return count % 2 != 0;
+	}
+
+	private boolean validCharArray(String value) {
+		for (int i = 1; i < value.length(); i++) {
+			if (isEscaped(value, i)) {
+				boolean valid = false;
+				for (int j = 0; j < escapableChars.length && !valid; j++) {
+					if (value.charAt(i) == escapableChars[j]) {
+						valid = true;
+					}
+				}
+
+				if (!valid)
+					return false;
+			}
+		}
+
+		return true;
 	}
 }
