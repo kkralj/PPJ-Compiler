@@ -69,8 +69,39 @@ public class Node {
 		return children;
 	}
 
+	public Node getChild(int index) {
+		if (index < 0 || index >= children.size()) {
+			throw new IllegalArgumentException("Invalid child index in node!");
+		}
+
+		return children.get(index);
+	}
+
 	public boolean isLeaf() {
 		return children.isEmpty();
+	}
+
+	/**
+	 * Returns production string where leafs are represented as
+	 * TOKEN_TYPE(<line>,<value>).
+	 * 
+	 * @return Produciton string where leafs are represented as
+	 *         TOKEN_TYPE(<line>,<value>).
+	 */
+	public String getFullProduction() {
+		String production = label + " ::=";
+
+		for (Node child : children) {
+			production += " ";
+			if (child.isLeaf()) {
+				String[] childLabel = child.label.split(" ");
+				production += childLabel[0] + "(" + childLabel[1] + "," + childLabel[2] + ")";
+			} else {
+				production += child.getLabel();
+			}
+		}
+
+		return production;
 	}
 
 }

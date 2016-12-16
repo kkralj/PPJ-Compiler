@@ -1,5 +1,6 @@
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.List;
 
 /**
  * @author Mato Manovic
@@ -630,47 +631,52 @@ public class SemanticAnalyzer {
 	 * ovim produkcijama u semantičkoj analizi ne treba ništa provjeriti,
 	 * produkcije ovdje nisu navedene.
 	 */
-	private void unarni_operator(Node root) {
+	private void unarni_operator(Node node) {
 		// <unarni_operator> ::= PLUS
 		// | MINUS
 		// | OP_TILDA
 		// | OP_NEG
+
+		// nista za provjeru, jeeej :D
 	}
 
 	/**
 	 * Nezavršni znak <unarni_izraz> generira izraze s opcionalnim prefiks
 	 * unarnim operatorima.
+	 * 
+	 * @throws SemanticAnalyserException
 	 */
-	private void unarni_izraz(Node root) {
+	private void unarni_izraz(Node node) throws SemanticAnalyserException {
 		// <unarni_izraz> ::= <postfiks_izraz>
 		// | OP_INC <unarni_izraz>
 		// | OP_DEC <unarni_izraz>
 		// | <unarni_operator> <cast_izraz>
 
-		if (root.getChildren().size() == 1) {
-			Node postfiksIzraz = root.getChildren().get(0);
-			root.setType(postfiksIzraz.getType());
-			root.setLeftOK(postfiksIzraz.isLeftOK());
+		InternalNodeContext context = new InternalNodeContext(node);
 
-		} else if (root.getChildren().get(1).getData().equals("<unarni_izraz>")) {
-			Node unarniIzraz = root.getChildren().get(1);
-
-			if (unarniIzraz.isLeftOK() && implicitInt(unarniIzraz.getType())) {
-				root.setType("int");
-				root.setLeftOK(false);
-			} else {
-				throw new IllegalArgumentException("Unarni izraz nije ispravan.");
+		if (context.isProduction("<unarni_izraz> ::= <postfiks_izraz>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
 			}
 
-		} else {
-			Node castIzraz = root.getChildren().get(1);
-
-			if (implicitInt(castIzraz.getType())) {
-				root.setType("int");
-				root.setLeftOK(false);
-			} else {
-				throw new IllegalArgumentException("Unarni izraz nije ispravan.");
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+		} else if (context.isProduction("<unarni_izraz> ::= OP_INC <unarni_izraz>")
+				|| context.isProduction("<unarni_izraz> ::= OP_DEC <unarni_izraz>")) {
+			Node child = node.getChild(1);
+			if (!check(child) || !child.getSymbolInfo().l_expr
+					|| !child.getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
 			}
+
+			context.symbolInfo.dataType.add(DataType.INT);
+			context.symbolInfo.l_expr = false;
+		} else if (context.isProduction("<unarni_izraz> ::= <unarni_operator> <cast_izraz>")) {
+			if (!check(node.getChild(1)) || !node.getChild(1).getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.add(DataType.INT);
+			context.symbolInfo.l_expr = false;
 		}
 	}
 
@@ -679,20 +685,28 @@ public class SemanticAnalyzer {
 	 * funkcije, a za razliku od nezavršnih znakova koji generiraju izraze, imat
 	 * će svojsto tipovi koje predstavlja listu tipova argumenata, s lijeva na
 	 * desno.
+	 * 
+	 * @throws SemanticAnalyserException
 	 */
-	private void lista_argumenata(Node root) {
+	private void lista_argumenata(Node node) throws SemanticAnalyserException {
 		// <lista_argumenata> ::= <izraz_pridruzivanja>
 		// | <lista_argumenata> ZAREZ <izraz_pridruzivanja>
 
-		if (root.getChildren().size() == 1) {
+		InternalNodeContext context = new InternalNodeContext(node);
 
-			// tipovi <- [<izraz_pridruzivanja>.tip]
-			// 1. provjeri(<izraz_pridruzivanja>)
+		if (context.isProduction("<lista_argumenata> ::= <izraz_pridruzivanja>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
+			}
 
-		} else {
-			// tipovi ← <lista_argumenata>.tipovi + [<izraz_pridruzivanja>.tip]
-			// 1. provjeri (<lista_argumenata>)
-			// 2. provjeri (<izraz_pridruzivanja>)
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+		} else if (context.isProduction("<lista_argumenata> ::= <lista_argumenata> ZAREZ <izraz_pridruzivanja>")) {
+			if (!check(context.firstChild) || !check(node.getChild(2))) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+			context.symbolInfo.dataType.addAll(node.getChildren().get(1).getSymbolInfo().dataType);
 		}
 
 	}
@@ -704,68 +718,81 @@ public class SemanticAnalyzer {
 	 * @throws SemanticAnalyserException
 	 */
 	private void postfiks_izraz(Node node) throws SemanticAnalyserException {
-		// <postfiks_izraz> ::= <primarni_izraz>
-		// | <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA
-		// | <postfiks_izraz> L_ZAGRADA D_ZAGRADA
-		// | <postfiks_izraz> L_ZAGRADA <lista_argumenata> D_ZAGRADA
-		// | <postfiks_izraz> OP_INC
-		// | <postfiks_izraz> OP_DEC
-
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction("<postfiks_izraz> ::= <primarni_izraz>")) {
-			if (check(context.child)) {
-				context.symbolInfo.dataType = context.child.getSymbolInfo().dataType;
-				context.symbolInfo.l_expr = context.child.getSymbolInfo().l_expr;
+			if (check(context.firstChild)) {
+				context.symbolInfo.dataType = context.firstChild.getSymbolInfo().dataType;
+				context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
 			} else {
-				throw new SemanticAnalyserException("<postfiks_izraz> ::= <primarni_izraz>");
+				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA")) {
-			Node child = node.getChildren().get(0);
+			Node child = context.firstChild;
 			check(child);
 			if (!child.getSymbolInfo().dataType.contains(DataType.CHAR_ARRAY)
 					&& !child.getSymbolInfo().dataType.contains(DataType.INT_ARRAY)
 					&& !child.getSymbolInfo().dataType.contains(DataType.CONST_INT_ARRAY)
 					&& !child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR_ARRAY)) {
-				throw new SemanticAnalyserException(
-						"<postfiks_izraz> ::= <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA");
+				throw new SemanticAnalyserException(node);
 			}
-			Node child2 = node.getChildren().get(2);
+			Node child2 = node.getChild(2);
 			check(child2);
 			if (!implicitInt(child.getSymbolInfo().dataType.get(0))) {
-				throw new SemanticAnalyserException(
-						"<postfiks_izraz> ::= <postfiks_izraz> L_UGL_ZAGRADA <izraz> D_UGL_ZAGRADA");
+				throw new SemanticAnalyserException(node);
 			}
-			if (child.getSymbolInfo().dataType.contains(DataType.CHAR_ARRAY)) {
-				context.symbolInfo.dataType.add(DataType.CHAR);
-				context.symbolInfo.l_expr = true;
-			} else if (child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR_ARRAY)) {
-				context.symbolInfo.dataType.add(DataType.CONST_CHAR);
+
+			if (child.getSymbolInfo().dataType.get(0).isConst()) {
 				context.symbolInfo.l_expr = false;
-			} else if (child.getSymbolInfo().dataType.contains(DataType.INT_ARRAY)) {
-				context.symbolInfo.dataType.add(DataType.INT);
+			} else {
 				context.symbolInfo.l_expr = true;
-			} else if (child.getSymbolInfo().dataType.contains(DataType.CONST_INT_ARRAY)) {
-				context.symbolInfo.dataType.add(DataType.CONST_INT);
-				context.symbolInfo.l_expr = false;
 			}
 		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA D_ZAGRADA")) {
-			Node child = node.getChildren().get(0);
+			Node child = context.firstChild;
 			check(child);
 			if (!child.getSymbolInfo().symbolType.equals(SymbolType.FUNCTION)
-					&& !child.getSymbolInfo().dataType.get(0).equals(DataType.VOID)) {
-				throw new SemanticAnalyserException("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA D_ZAGRADA");
+					&& child.getSymbolInfo().dataType.size() != 1) {
+				throw new SemanticAnalyserException(node);
 			}
-			context.symbolInfo.dataType.add(DataType.VOID);
+			context.symbolInfo.dataType.add(child.getSymbolInfo().dataType.get(0));
 			context.symbolInfo.l_expr = false;
 
 		} else if (context
 				.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA <lista_argumenata> D_ZAGRADA")) {
+			if (!check(context.firstChild) || !check(context.node.getChild(2))) {
+				throw new SemanticAnalyserException(node);
+			}
 
-		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> OP_INC")) {
+			if (!context.firstChild.getSymbolInfo().symbolType.equals(SymbolType.FUNCTION)) {
+				throw new SemanticAnalyserException(node);
+			}
 
-		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> OP_DEC")) {
+			Node secondChild = node.getChild(2);
+			int argNum = secondChild.getSymbolInfo().dataType.size();
 
+			if (context.firstChild.getSymbolInfo().dataType.size() - 1 != argNum) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			List<DataType> paramTypes = context.firstChild.getSymbolInfo().dataTypeTail();
+			List<DataType> argTypes = secondChild.getSymbolInfo().dataType;
+
+			for (int i = 0; i < argNum; i++) {
+				if (!argTypes.get(i).implicit(paramTypes.get(i))) {
+					throw new SemanticAnalyserException(node);
+				}
+			}
+
+			context.symbolInfo.l_expr = false;
+		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> OP_INC")
+				|| context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> OP_DEC")) {
+			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().l_expr
+					|| !context.firstChild.getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.add(DataType.INT);
+			context.symbolInfo.l_expr = false;
 		}
 	}
 
@@ -780,43 +807,43 @@ public class SemanticAnalyzer {
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction("<primarni_izraz> ::= IDN")) {
-			String name = context.child.getTokenName();
+			String name = context.firstChild.getTokenName();
 
 			if (scope.isDeclared(name)) {
 				context.symbolInfo.dataType = scope.getSymbolInfo(name).dataType;
 				context.symbolInfo.l_expr = scope.getSymbolInfo(name).l_expr;
 			} else {
-				throw new SemanticAnalyserException("<primarni_izraz> ::= IDN");
+				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<primarni_izraz> ::= BROJ")) {
 			context.symbolInfo.dataType.add(DataType.INT);
 			context.symbolInfo.l_expr = false;
 
-			if (!validIntRange(context.child.getTokenName())) {
-				throw new SemanticAnalyserException("<primarni_izraz> ::= BROJ");
+			if (!validIntRange(context.firstChild.getTokenName())) {
+				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<primarni_izraz> ::= ZNAK")) {
 			context.symbolInfo.dataType.add(DataType.CHAR);
 			context.symbolInfo.l_expr = false;
 
-			if (!validChar(context.child.getTokenName())) {
-				throw new SemanticAnalyserException("<primarni_izraz> ::= ZNAK");
+			if (!validChar(context.firstChild.getTokenName())) {
+				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<primarni_izraz> ::= NIZ_ZNAKOVA")) {
 			context.symbolInfo.dataType.add(DataType.CONST_CHAR_ARRAY);
 			context.symbolInfo.l_expr = false;
 
-			if (!validCharArray(context.child.getTokenName())) {
-				throw new SemanticAnalyserException("<primarni_izraz> ::= NIZ_ZNAKOVA");
+			if (!validCharArray(context.firstChild.getTokenName())) {
+				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<primarni_izraz> ::= L_ZAGRADA <izraz> D_ZAGRADA")) {
-			Node child = node.getChildren().get(1);
+			Node child = node.getChild(1);
 
 			if (check(child)) {
 				context.symbolInfo.dataType = child.getSymbolInfo().dataType;
 				context.symbolInfo.l_expr = child.getSymbolInfo().l_expr;
 			} else {
-				throw new SemanticAnalyserException("<primarni_izraz> ::= L_ZAGRADA <izraz> D_ZAGRADA");
+				throw new SemanticAnalyserException(node);
 			}
 		}
 	}
@@ -874,8 +901,9 @@ public class SemanticAnalyzer {
 	 * @return
 	 */
 	private static boolean implicit(DataType dataType1, DataType dataType2) {
-		if(dataType1.equals(DataType.CHAR)&&dataType2.equals(DataType.INT));
-		//TODO
+		if (dataType1.equals(DataType.CHAR) && dataType2.equals(DataType.INT))
+			;
+		// TODO
 	}
 
 	private static boolean validIntRange(String value) {

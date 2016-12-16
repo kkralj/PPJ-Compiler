@@ -13,4 +13,45 @@ public enum DataType {
 
 		return VOID;
 	}
+
+	public String getPlainType() {
+		String type = toString();
+
+		boolean _isConst = isConst();
+		boolean _isArray = isArray();
+
+		if (!_isConst && !_isArray) {
+			return type;
+		} else if (_isConst && _isArray) {
+			return type.split("_")[1];
+		} else if (_isConst && !_isArray) {
+			return type.split("_")[1];
+		} else {
+			return type.split("_")[0];
+		}
+	}
+
+	public boolean isPlain() {
+		return !isConst() && !isArray();
+	}
+
+	public boolean isConst() {
+		return this.toString().contains("CONST");
+	}
+
+	public boolean isArray() {
+		return this.toString().contains("ARRAY");
+	}
+
+	public boolean implicit(DataType other) {
+		String thisT = this.getPlainType();
+		String otherT = other.getPlainType();
+
+		boolean case1 = (!isArray() && !other.isArray()) && (thisT.equals(otherT))
+				&& ((isConst() && !other.isConst()) || (!isConst() && other.isConst()));
+		boolean case2 = !isArray() && !other.isArray() && thisT.equals("CHAR") && otherT.equals("INT");
+		boolean case3 = isArray() && !isConst() && other.isArray() && other.isConst() && thisT.equals(otherT);
+
+		return case1 || case2 || case3;
+	}
 }
