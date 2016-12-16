@@ -332,7 +332,7 @@ public class SemanticAnalyzer {
 				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<init_deklarator> ::= <izravni_deklarator> OP_PRIDRUZI <inicijalizator>")) {
-			
+
 			check(context.firstChild);
 
 			check(node.getChild(2));
@@ -589,8 +589,22 @@ public class SemanticAnalyzer {
 
 			symbolInfo.isDefined = true;
 
-			// proslijedi tipove i nazive parametara
+			scope = new Scope(scope);
+
+			// dodaj parametre funkcije u novostvoreni scope
+
+			List<DataType> types = node.getChild(3).getSymbolInfo().dataType;
+			List<String> arguments = node.getChild(3).getSymbolInfo().argumentNames;
+
+			for (int i = 0; i < arguments.size(); i++) {
+				symbolInfo = scope.addVariable(arguments.get(i));
+				symbolInfo.dataType.add(types.get(i));
+				symbolInfo.symbolType = SymbolType.VARIABLE;
+			}
+
 			check(node.getChild(5));
+
+			scope = scope.getParent();
 		}
 	}
 
@@ -1217,7 +1231,7 @@ public class SemanticAnalyzer {
 			Node child = context.firstChild;
 			check(child);
 			if (!child.getSymbolInfo().symbolType.equals(SymbolType.FUNCTION)
-					&& child.getSymbolInfo().dataType.size() != 2) {
+					|| child.getSymbolInfo().dataType.size() != 2) {
 				throw new SemanticAnalyserException(node);
 			}
 			context.symbolInfo.dataType.add(child.getSymbolInfo().dataType.get(0));
