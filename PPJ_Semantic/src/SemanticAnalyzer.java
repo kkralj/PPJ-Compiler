@@ -1217,7 +1217,7 @@ public class SemanticAnalyzer {
 			Node child = context.firstChild;
 			check(child);
 			if (!child.getSymbolInfo().symbolType.equals(SymbolType.FUNCTION)
-					&& child.getSymbolInfo().dataType.size() != 1) {
+					&& child.getSymbolInfo().dataType.size() != 2) {
 				throw new SemanticAnalyserException(node);
 			}
 			context.symbolInfo.dataType.add(child.getSymbolInfo().dataType.get(0));
