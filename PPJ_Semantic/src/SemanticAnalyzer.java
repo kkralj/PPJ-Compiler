@@ -416,7 +416,35 @@ public class SemanticAnalyzer {
 		}
 	}
 
-	private void inicijalizator(Node node) {
+	private void inicijalizator(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<inicijalizator> ::= <izraz_pridruzivanja>")) {
+			check(context.firstChild);
+
+			Node charArrayNode = goesToCharArray(node);
+
+			// there can be spaces in string?
+			String charArray = charArrayNode.getLabel().split(" ", 3)[2];
+
+			if (charArray != null) {
+				// don't count ""
+				context.symbolInfo.elemCount = charArray.length() - 2;
+
+				for (int i = 0; i < context.symbolInfo.elemCount; i++) {
+					context.symbolInfo.dataType.add(DataType.CHAR);
+				}
+			} else {
+				context.symbolInfo.dataType.add(context.firstChild.getSymbolInfo().getType());
+			}
+		} else if (context
+				.isProduction("<inicijalizator> ::= L_VIT_ZAGRADA <lista_izraza_pridruzivanja> D_VIT_ZAGRADA")) {
+			check(node.getChild(1));
+
+			context.symbolInfo.elemCount = node.getChild(1).getSymbolInfo().elemCount;
+			context.symbolInfo.dataType.addAll(node.getChild(1).getSymbolInfo().dataType);
+		}
+
 	}
 
 	private void lista_izraza_pridruzivanja(Node node) {
@@ -1320,6 +1348,26 @@ public class SemanticAnalyzer {
 		}
 
 		return false;
+	}
+
+	private static final String searchString = "NIZ_ZNAKOVA";
+
+	private Node goesToCharArray(Node node) {
+		if (node.getLabel().contains(searchString)) {
+			return node;
+		}
+
+		Node res = null;
+
+		for (Node child : node.getChildren()) {
+			res = goesToCharArray(child);
+
+			if (res != null) {
+				return res;
+			}
+		}
+
+		return res;
 	}
 
 	private void declareGlobally(String name, SymbolInfo symbolInfo) {
