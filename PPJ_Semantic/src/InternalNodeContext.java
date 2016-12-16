@@ -15,11 +15,17 @@ public class InternalNodeContext {
 		if (!node.isLeaf()) {
 			firstChild = node.getChildren().get(0); // default is first child, which
 												// is often the case
-			if(node.getChildren().size()==2){
-				child2=node.getChildren().get(1);
+			
+			int childrenSize = node.getChildren().size();
+			
+			if(childrenSize==1) {
+				child = node.getChild(0);
 			}
-			if(node.getChildren().size()==3){
-				child2=node.getChildren().get(2);
+			if(childrenSize==2){
+				child2=node.getChild(1);
+			}
+			if(childrenSize==3){
+				child3=node.getChild(2);
 			}
 		}
 	}

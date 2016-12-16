@@ -2,10 +2,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
-
-import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
 
 /**
  * @author Mato Manovic
@@ -34,6 +31,8 @@ public class SemanticAnalyzer {
 		this.scope = new Scope(null); // global context, no parent
 		try {
 			check(syntaxTree.getRoot());
+
+			postAnalysis();
 		} catch (SemanticAnalyserException e) {
 			System.out.println(e.getMessage());
 		}
@@ -64,7 +63,10 @@ public class SemanticAnalyzer {
 	}
 
 	private boolean check(Node node) throws SemanticAnalyserException {
-		completeActions(node);
+
+		if (!node.isLeaf()) {
+			completeActions(node);
+		}
 
 		return true;
 	}
@@ -1041,17 +1043,17 @@ public class SemanticAnalyzer {
 		// | KR_CONST <specifikator_tipa>
 		InternalNodeContext context = new InternalNodeContext(node);
 		if (context.isProduction("<ime_tipa> ::= <specifikator_tipa>")) {
-			check(context.child);
-			context.symbolInfo.dataType = context.child.getSymbolInfo().dataType;
+			check(context.firstChild);
+			context.symbolInfo.dataType = context.firstChild.getSymbolInfo().dataType;
 		} else {
-			check(context.child2);
-			if (context.child2.getSymbolInfo().dataType.contains(DataType.VOID)) {
+			check(node.getChild(1));
+			if (node.getChild(1).getSymbolInfo().dataType.contains(DataType.VOID)) {
 				throw new SemanticAnalyserException(node);
 			}
 
-			if (context.child2.getSymbolInfo().dataType.contains(DataType.INT)) {
+			if (node.getChild(1).getSymbolInfo().dataType.contains(DataType.INT)) {
 				context.symbolInfo.dataType.add(DataType.CONST_INT);
-			} else if (context.child2.getSymbolInfo().dataType.contains(DataType.CHAR)) {
+			} else if (node.getChild(1).getSymbolInfo().dataType.contains(DataType.CHAR)) {
 				context.symbolInfo.dataType.add(DataType.CONST_CHAR);
 			}
 		}
@@ -1377,7 +1379,7 @@ public class SemanticAnalyzer {
 			node = node.getParent();
 
 			if (node.getLabel().equals("<definicija_funkcije>")) {
-				signature = scope.getSymbolInfo(node.getChild(1).getTokenName()).dataType;
+				signature = getGlobalScope().getSymbolInfo(node.getChild(1).getTokenName()).dataType;
 			}
 		}
 

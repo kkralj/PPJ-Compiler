@@ -39,7 +39,11 @@ public class Node {
 		String production = label + " ::=";
 
 		for (Node child : children) {
-			production += " " + child.label;
+			if (child.isLeaf()) {
+				production += " " + child.label.split(" ", 2)[0];
+			} else {
+				production += " " + child.label;
+			}
 		}
 
 		return production;
