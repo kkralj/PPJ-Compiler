@@ -9,18 +9,16 @@ public class Scope {
 		this.parent = parent;
 	}
 
-	public SymbolInfo addVariable(Node node) {
-		if (symbolExists(node.getTokenName())) {
-			throw new IllegalArgumentException("Variable already declared.");
-		}
-
-		String symbolName = node.getLabel().split(" ")[1];
-
+	public SymbolInfo addVariable(String symbolName) {
 		SymbolInfo symbolInfo = new SymbolInfo();
 
 		symbolTable.put(symbolName, symbolInfo);
 
 		return symbolInfo;
+	}
+
+	public void addVariable(String name, SymbolInfo symbolInfo) {
+		symbolTable.put(name, symbolInfo);
 	}
 
 	public boolean isDeclared(String name) {
@@ -31,6 +29,26 @@ public class Scope {
 				return true;
 			}
 			current = current.getParent();
+		}
+
+		return false;
+	}
+
+	public boolean isLocalScope() {
+		return parent != null;
+	}
+
+	public boolean isFunctionDefined(String name) {
+		Scope scope = this;
+
+		while (this.parent != null) {
+			scope = this.parent;
+		}
+
+		SymbolInfo symbolInfo = scope.getSymbolInfo(name);
+
+		if (symbolInfo != null) {
+			return symbolInfo.isDefined;
 		}
 
 		return false;

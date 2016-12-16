@@ -2,7 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SymbolInfo {
-	SymbolType symbolType;
+	SymbolType symbolType = SymbolType.UNDEFINED;
 	/**
 	 * In case of a function, first element is return type, other elements are
 	 * argument types. In case of variable, just one element is needed -- type
@@ -10,6 +10,11 @@ public class SymbolInfo {
 	 */
 	List<DataType> dataType = new ArrayList<>();
 	boolean l_expr;
+	boolean isDefined;
+
+	int elemCount;
+
+	List<String> argumentNames = new ArrayList<>();
 
 	public SymbolInfo() {
 	}

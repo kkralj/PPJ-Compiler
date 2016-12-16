@@ -1,6 +1,10 @@
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
+
+import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
 
 /**
  * @author Mato Manovic
@@ -8,10 +12,18 @@ import java.util.List;
  */
 public class SemanticAnalyzer {
 
+	private static final int MAX_ARRAY_SIZE = 1024;
+
 	private SyntaxTree syntaxTree;
 	private Scope scope;
 	// check if provided characters are ASCII compliant
-	static CharsetEncoder asciiEncoder = Charset.forName("US-ASCII").newEncoder();
+	private static CharsetEncoder asciiEncoder = Charset.forName("US-ASCII").newEncoder();
+
+	/**
+	 * Nasljedno svojstvo se stavlja na stog prije poziva provjere, a skida
+	 * nakon provjere.
+	 */
+	private Stack<DataType> inheritableType = new Stack<>();
 
 	public SemanticAnalyzer(SyntaxTree syntaxTree) {
 		this.syntaxTree = syntaxTree;
@@ -25,7 +37,7 @@ public class SemanticAnalyzer {
 	private boolean check(Node node) throws SemanticAnalyserException {
 		completeActions(node);
 
-		return false;
+		return true;
 	}
 
 	/**
@@ -206,82 +218,336 @@ public class SemanticAnalyzer {
 		}
 	}
 
-	private void lista_deklaracija(Node root) {
+	private void lista_deklaracija(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<lista_deklaracija> ::= <deklaracija>")) {
+			check(context.firstChild);
+		} else if (context.isProduction("<lista_deklaracija> ::= <lista_deklaracija> <deklaracija>")) {
+			check(context.firstChild);
+			check(node.getChild(1));
+		}
 	}
 
-	private void deklaracija_parametra(Node root) {
+	private void deklaracija_parametra(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<deklaracija_parametra> ::= <ime_tipa> IDN")) {
+			check(context.firstChild);
+
+			if (context.firstChild.getSymbolInfo().getType().equals(DataType.VOID)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.add(context.firstChild.getSymbolInfo().getType());
+			context.symbolInfo.argumentNames.add(node.getChild(1).getTokenName());
+		} else if (context.isProduction("<deklaracija_parametra> ::= <ime_tipa> IDN L_UGL_ZAGRADA D_UGL_ZAGRADA")) {
+			check(context.firstChild);
+
+			if (context.firstChild.getSymbolInfo().getType().equals(DataType.VOID)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.add(context.firstChild.getSymbolInfo().getType().toArray());
+			context.symbolInfo.argumentNames.add(node.getChild(1).getTokenName());
+		}
 	}
 
-	private void deklaracija(Node root) {
+	private void deklaracija(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<deklaracija> ::= <ime_tipa> <lista_init_deklaratora> TOCKAZAREZ")) {
+			check(context.firstChild);
+
+			// uz nasljedno svojstvo <lista_init_deklaratora>.ntip ←
+			// <ime_tipa>.tip
+
+			inheritableType.push(context.firstChild.getSymbolInfo().getType());
+			check(node.getChild(1));
+			inheritableType.pop();
+		}
 	}
 
-	private void lista_init_deklaratora(Node root) {
+	private void lista_init_deklaratora(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<lista_init_deklaratora> ::= <init_deklarator>")) {
+			// nasljedno svojstvo na stogu
+			check(context.firstChild);
+		} else if (context
+				.isProduction("<lista_init_deklaratora> ::= <lista_init_deklaratora> ZAREZ <init_deklarator>")) {
+			// nasljedno svojstvo na stogu
+			check(context.firstChild);
+
+			check(node.getChild(2));
+		}
 	}
 
-	private void init_deklarator(Node root) {
+	private void init_deklarator(Node node) throws SemanticAnalyserException {
 		// <init_deklarator> ::= <izravni_deklarator>
 		// | <izravni_deklarator> OP_PRIDRUZI <inicijalizator>
 
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<init_deklarator> ::= <izravni_deklarator>")) {
+
+			// nasljedno svojstvo na stogu
+			check(context.firstChild);
+
+			DataType dataType = context.firstChild.getSymbolInfo().getType();
+
+			if (dataType.isConst()) {
+				throw new SemanticAnalyserException(node);
+			}
+		} else if (context.isProduction("<init_deklarator> ::= <izravni_deklarator> OP_PRIDRUZI <inicijalizator>")) {
+			check(context.firstChild);
+
+			check(node.getChild(2));
+
+			DataType dataType = context.firstChild.getSymbolInfo().getType();
+
+			if (dataType.isPlain() || (dataType.isConst() && !dataType.isArray())) {
+				if (!node.getChild(2).getSymbolInfo().getType().implicit(dataType)) {
+					throw new SemanticAnalyserException(node);
+				}
+			} else if (dataType.isArray()) {
+				if (node.getChild(2).getSymbolInfo().elemCount > node.getChild(0).getSymbolInfo().elemCount) {
+					throw new SemanticAnalyserException(node);
+				}
+
+				List<DataType> initializerTypes = node.getChild(2).getSymbolInfo().dataType;
+
+				for (DataType initDataType : initializerTypes) {
+					if (!initDataType.implicit(dataType)) {
+						throw new SemanticAnalyserException(node);
+					}
+				}
+			} else {
+				// iz uputa
+				throw new SemanticAnalyserException(node);
+			}
+		}
 	}
 
-	private void izravni_deklarator(Node root) {
+	private void izravni_deklarator(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		String name = context.firstChild.getTokenName();
+		Scope globalScope = getGlobalScope();
+
+		if (context.isProduction("<izravni_deklarator> ::= IDN")) {
+
+			name = context.firstChild.getTokenName();
+
+			if (inheritableType.peek().equals(DataType.VOID) || isDeclaredLocally(name)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.symbolType = SymbolType.VARIABLE;
+			context.symbolInfo.argumentNames.add(name);
+			context.symbolInfo.dataType.add(inheritableType.peek());
+
+			scope.addVariable(name, context.symbolInfo);
+		} else if (context.isProduction("<izravni_deklarator> ::= IDN L_UGL_ZAGRADA BROJ D_UGL_ZAGRADA")) {
+
+			if (inheritableType.peek().equals(DataType.VOID) || isDeclaredLocally(name)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			String number = node.getChild(2).getTokenName();
+
+			try {
+				int elemCount = Integer.parseInt(number);
+
+				if (elemCount <= 0 || elemCount > MAX_ARRAY_SIZE) {
+					throw new SemanticAnalyserException(node);
+				}
+
+				context.symbolInfo.symbolType = SymbolType.ARRAY;
+				context.symbolInfo.dataType.add(inheritableType.peek().toArray());
+				context.symbolInfo.elemCount = elemCount;
+
+				scope.addVariable(name, context.symbolInfo);
+			} catch (NumberFormatException e) {
+				throw new SemanticAnalyserException(node);
+			}
+		} else if (context.isProduction("<izravni_deklarator> ::= IDN L_ZAGRADA KR_VOID D_ZAGRADA")) {
+			if (scope.isLocalScope() && globalScope.isDeclared(name)) {
+				SymbolInfo symbolInfo = globalScope.getSymbolInfo(name);
+
+				if (symbolInfo.dataType.size() != 2 || !symbolInfo.getType().equals(inheritableType)
+						|| !symbolInfo.dataType.get(1).equals(DataType.VOID)) {
+					throw new SemanticAnalyserException(node);
+				}
+			} else {
+				context.symbolInfo.symbolType = SymbolType.FUNCTION;
+				context.symbolInfo.dataType.add(inheritableType.peek());
+				context.symbolInfo.dataType.add(DataType.VOID);
+
+				declareGlobally(name, context.symbolInfo);
+			}
+		} else if (context.isProduction("<izravni_deklarator> ::= IDN L_ZAGRADA <lista_parametara> D_ZAGRADA")) {
+			check(node.getChild(2));
+
+			if (scope.isLocalScope() && globalScope.isDeclared(name)) {
+				SymbolInfo symbolInfo = globalScope.getSymbolInfo(name);
+				List<DataType> declared = symbolInfo.dataType;
+				List<DataType> newlyDeclared = node.getChild(2).getSymbolInfo().dataType;
+
+				if (!symbolInfo.symbolType.equals(SymbolType.FUNCTION) || newlyDeclared.size() + 1 != declared.size()) {
+					throw new SemanticAnalyserException(node);
+				}
+
+				context.symbolInfo.dataType.add(inheritableType.peek());
+				context.symbolInfo.dataType.addAll(newlyDeclared);
+
+				for (int i = 0; i < declared.size(); i++) {
+					if (!declared.get(i).equals(context.symbolInfo.dataType.get(i))) {
+						throw new SemanticAnalyserException(node);
+					}
+				}
+			} else {
+				context.symbolInfo.symbolType = SymbolType.FUNCTION;
+				context.symbolInfo.dataType.add(inheritableType.peek());
+				context.symbolInfo.dataType.addAll(node.getChild(2).getSymbolInfo().dataType);
+
+				declareGlobally(name, context.symbolInfo);
+			}
+		}
 	}
 
-	private void inicijalizator(Node root) {
+	private void inicijalizator(Node node) {
 	}
 
-	private void lista_izraza_pridruzivanja(Node root) {
+	private void lista_izraza_pridruzivanja(Node node) {
 	}
 
-	private void lista_parametara(Node root) {
+	private void lista_parametara(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<lista_parametara> ::= <deklaracija_parametra>")) {
+			check(context.firstChild);
+
+			context.symbolInfo.argumentNames.addAll(context.firstChild.getSymbolInfo().argumentNames);
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+		} else if (context.isProduction("<lista_parametara> ::= <lista_parametara> ZAREZ <deklaracija_parametra>")) {
+			check(context.firstChild);
+			check(node.getChild(2));
+
+			SymbolInfo paramListSymbolInfo = context.firstChild.getSymbolInfo();
+			SymbolInfo declParamSymbolInfo = node.getChild(2).getSymbolInfo();
+
+			if (paramListSymbolInfo.argumentNames.contains(declParamSymbolInfo.argumentNames.get(0))) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.addAll(paramListSymbolInfo.dataType);
+			// only one data type here
+			context.symbolInfo.dataType.addAll(declParamSymbolInfo.dataType);
+
+			context.symbolInfo.argumentNames.addAll(paramListSymbolInfo.argumentNames);
+			// only one name here
+			context.symbolInfo.argumentNames.addAll(declParamSymbolInfo.argumentNames);
+		}
 	}
 
 	private void definicija_funkcije(Node node) throws SemanticAnalyserException {
-		InternalNodeContext context = new InternalNodeContext(node);
 		// <definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA KR_VOID D_ZAGRADA
 		// <slozena_naredba>
 		// | <ime_tipa> IDN L_ZAGRADA <lista_parametara> D_ZAGRADA
 		// <slozena_naredba>
+		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction(
 				"<definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA KR_VOID D_ZAGRADA <slozena_naredba>")) {
-			check(context.child);
-			if (context.child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR)
-					|| context.child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR)) {
-				throw new SemanticAnalyserException(
-						"<definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA KR_VOID D_ZAGRADA <slozena_naredba>");
+			check(context.firstChild);
+			if (context.firstChild.getSymbolInfo().dataType.get(0).isConst()) {
+				throw new SemanticAnalyserException(node);
 			}
 
-			// 1. provjeri (<ime_tipa>)napravljeno
-			// 2. <ime_tipa>.tip != const(T )napravljeno
-			// 3. ne postoji prije definirana funkcija imena IDN.ime
-			// 4. ako postoji deklaracija imena IDN.ime u globalnom djelokrugu
-			// onda je pripadni
-			// tip te deklaracije funkcija(void → <ime_tipa>.tip)
-			// 5. zabilježi definiciju i deklaraciju funkcije
-			// 6. provjeri (<slozena_naredba>)
+			String functionName = node.getChild(1).getTokenName();
 
-		} else {
+			if (scope.isDeclared(functionName)) {
+				List<DataType> functionSignature = scope.getSymbolInfo(functionName).dataType;
+				if (functionSignature.size() != 2
+						|| !functionSignature.get(0).equals(context.firstChild.getSymbolInfo().getType())
+						|| !functionSignature.get(1).equals(DataType.VOID)) {
+					throw new SemanticAnalyserException(node);
+				}
 
+				scope.getSymbolInfo(functionName).isDefined = true;
+			} else {
+				SymbolInfo symbolInfo = scope.addVariable(functionName);
+				symbolInfo.symbolType = SymbolType.FUNCTION;
+				symbolInfo.isDefined = true;
+				symbolInfo.dataType.add(node.getChild(0).getSymbolInfo().getType());
+				symbolInfo.dataType.add(DataType.VOID);
+
+				check(node.getChild(5));
+			}
+		} else if (context.isProduction(
+				"<definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA <lista_parametara> D_ZAGRADA <slozena_naredba>")) {
+			check(context.firstChild);
+
+			String functionName = node.getChild(1).getTokenName();
+
+			if (context.firstChild.getSymbolInfo().getType().isConst() || scope.isFunctionDefined(functionName)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			check(node.getChild(3));
+
+			SymbolInfo symbolInfo;
+
+			if (scope.isDeclared(functionName)) {
+				symbolInfo = scope.getSymbolInfo(functionName);
+			} else {
+				symbolInfo = scope.addVariable(functionName);
+			}
+
+			symbolInfo.symbolType = SymbolType.FUNCTION;
+			symbolInfo.dataType.add(node.getChild(0).getSymbolInfo().getType());
+			symbolInfo.dataType.addAll(node.getChild(3).getSymbolInfo().dataType);
+
+			symbolInfo.isDefined = true;
+
+			// proslijedi tipove i nazive parametara
+			check(node.getChild(5));
 		}
 	}
 
 	/**
 	 * Nezavršni znak <naredba_skoka> generira continue, break i return naredbe.
 	 */
-	private void naredba_skoka(Node root) {
+	private void naredba_skoka(Node node) throws SemanticAnalyserException {
 		// <naredba_skoka> ::= KR_CONTINUE TOCKAZAREZ
 		// | KR_BREAK TOCKAZAREZ
 		// | KR_RETURN TOCKAZAREZ
 		// | KR_RETURN <izraz> TOCKAZAREZ
 
-		if (root.getChildren().size() == 3 && root.getChildren().get(1).getData().equals("<izraz>")) {
-			// 1. provjeri (<izraz>)
-			// 2. naredba se nalazi unutar funkcije tipa funkcija(params → pov )
-			// i vrijedi <izraz>.tip ∼ pov
+		InternalNodeContext context = new InternalNodeContext(node);
 
+		if (context.isProduction("<naredba_skoka> ::= KR_CONTINUE TOCKAZAREZ")
+				|| context.isProduction("<naredba_skoka> ::= KR_BREAK TOCKAZAREZ")) {
+			if (!isInsideLoop(node)) {
+				throw new SemanticAnalyserException(node);
+			}
+		} else if (context.isProduction("<naredba_skoka> ::= KR_RETURN TOCKAZAREZ")) {
+			List<DataType> functionSignature = getFunctionSignature(node);
+
+			if (functionSignature.size() == 0 || !functionSignature.get(0).equals(DataType.VOID)) {
+				throw new SemanticAnalyserException(node);
+			}
+		} else if (context.isProduction("<naredba_skoka> ::= KR_RETURN <izraz> TOCKAZAREZ")) {
+			check(node.getChild(1));
+
+			List<DataType> functionSignature = getFunctionSignature(node);
+
+			if (functionSignature.size() == 0
+					|| !node.getChild(1).getSymbolInfo().getType().implicit(functionSignature.get(0))) {
+				throw new SemanticAnalyserException(node);
+			}
 		}
-
 	}
 
 	private void naredba_petlje(Node node) throws SemanticAnalyserException {
@@ -293,30 +559,27 @@ public class SemanticAnalyzer {
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction("<naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>")) {
-			check(context.child3);
-			if (!implicitInt(context.child3.getSymbolInfo().dataType.get(0))) {
-				throw new SemanticAnalyserException(
-						"<naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>");
+			check(node.getChild(2));
+			if (!node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
 			}
-			check(node.getChildren().get(4));
+			check(node.getChild(4));
 		} else if (context
 				.isProduction("<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA")) {
-			check(context.child3);
-			check(node.getChildren().get(3));
-			if (!implicitInt(node.getChildren().get(3).getSymbolInfo().dataType.get(0))) {
-				throw new SemanticAnalyserException(
-						"<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA");
+			check(node.getChild(2));
+			check(node.getChild(3));
+			if (!node.getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
 			}
-			check(node.getChildren().get(5));
+			check(node.getChild(5));
 		} else {
-			check(context.child3);
-			check(node.getChildren().get(3));
-			if (!implicitInt(node.getChildren().get(3).getSymbolInfo().dataType.get(0))) {
-				throw new SemanticAnalyserException(
-						"<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> <izraz> D_ZAGRADA <naredba>");
+			check(node.getChild(2));
+			check(node.getChild(3));
+			if (!node.getChild(3).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
 			}
-			check(node.getChildren().get(4));
-			check(node.getChildren().get(6));
+			check(node.getChild(4));
+			check(node.getChild(6));
 		}
 
 	}
@@ -325,9 +588,9 @@ public class SemanticAnalyzer {
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction("<vanjska_deklaracija> ::= <definicija_funkcije>")) {
-			check(context.child);
+			check(context.firstChild);
 		} else if (context.isProduction("<vanjska_deklaracija> ::= <deklaracija>")) {
-			check(context.child);
+			check(context.firstChild);
 		}
 	}
 
@@ -335,71 +598,83 @@ public class SemanticAnalyzer {
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction("<prijevodna_jedinica> ::= <vanjska_deklaracija>")) {
-			check(context.child);
+			check(context.firstChild);
 		} else if (context.isProduction("<prijevodna_jedinica> ::= <prijevodna_jedinica> <vanjska_deklaracija>")) {
-			check(context.child);
-			check(context.child2);
+			check(context.firstChild);
+			check(node.getChild(1));
 		}
 	}
 
 	private void naredba_grananja(Node node) throws SemanticAnalyserException {
 		// <naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba>
 		// | KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba> KR_ELSE <naredba>
+
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction("<naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba>")) {
-			check(context.child3);
-			if (!implicitInt(context.child3.getSymbolInfo().dataType.get(0))) {
-				throw new SemanticAnalyserException(
-						"<naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba>");
+			check(node.getChild(2));
+			if (!node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
 			}
-			check(node.getChildren().get(4));
+			check(node.getChild(4));
 		} else {
-			check(context.child3);
-			if (!implicitInt(context.child3.getSymbolInfo().dataType.get(0))) {
-				throw new SemanticAnalyserException(
-						"<naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba> KR_ELSE <naredba>");
+			check(node.getChild(2));
+			if (!node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
 			}
-			check(node.getChildren().get(4));
-			check(node.getChildren().get(6));
+			check(node.getChild(4));
+			check(node.getChild(6));
 		}
 
 	}
 
-	private void izraz_naredba(Node root) {
+	private void izraz_naredba(Node node) throws SemanticAnalyserException {
 
 		// <izraz_naredba> ::= TOCKAZAREZ
 		// | <izraz> TOCKAZAREZ
 
-		if (root.getChildren().size() == 1) {
-			root.setType("int");
+		InternalNodeContext context = new InternalNodeContext(node);
 
-		} else {
-			Node izraz = root.getChildren().get(0);
-			root.setType(izraz.getType());
+		if (context.isProduction("<izraz_naredba> ::= TOCKAZAREZ")) {
+			context.symbolInfo.dataType.add(DataType.INT);
+		} else if (context.isProduction("<izraz_naredba> ::= <izraz> TOCKAZAREZ")) {
+			check(context.firstChild);
+
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 		}
-
 	}
 
-	private void naredba(Node root) {
+	private void naredba(Node node) throws SemanticAnalyserException {
 		// <naredba> ::= <slozena_naredba>
 		// | <izraz_naredba>
 		// | <naredba_grananja>
 		// | <naredba_petlje>
 		// | <naredba_skoka>
 
-		if (root.getChildren().get(0).getData().equals("<naredba_skoka>")) {
-			Node child = root.getChildren().get(0);
-			root.setType(child.getType());
-			root.setLeftOK(child.isLeftOK());
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		// sve jedinicne produkcije, samo se provjeravaju
+
+		if (!check(context.firstChild)) {
+			throw new SemanticAnalyserException(node);
 		}
 	}
 
-	private void lista_naredbi(Node root) {
+	private void lista_naredbi(Node node) throws SemanticAnalyserException {
 		// <lista_naredbi> ::= <naredba>
 		// | <lista_naredbi> <naredba>
 
-		// do nothing
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<lista_naredbi> ::= <naredba>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
+			}
+		} else if (context.isProduction("<lista_naredbi> ::= <lista_naredbi> <naredba>")) {
+			if (!check(context.firstChild) || !check(node.getChild(1))) {
+				throw new SemanticAnalyserException(node);
+			}
+		}
 	}
 
 	/**
@@ -1008,6 +1283,67 @@ public class SemanticAnalyzer {
 			context.symbolInfo.dataType.addAll(node.getChild(2).getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = false;
 		}
+	}
+
+	private boolean isInsideFunction(Node node) {
+		while (node.getParent() != null) {
+			node = node.getParent();
+
+			if (node.getLabel().equals("<definicija_funkcije>")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private List<DataType> getFunctionSignature(Node node) {
+		List<DataType> signature = new ArrayList<>();
+		while (node.getParent() != null) {
+			node = node.getParent();
+
+			if (node.getLabel().equals("<definicija_funkcije>")) {
+				signature = scope.getSymbolInfo(node.getChild(1).getTokenName()).dataType;
+			}
+		}
+
+		return signature;
+	}
+
+	private boolean isInsideLoop(Node node) {
+		while (node.getParent() != null) {
+			node = node.getParent();
+
+			if (node.getLabel().equals("<naredba_petlje>")) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	private void declareGlobally(String name, SymbolInfo symbolInfo) {
+		Scope global = scope;
+
+		while (global.getParent() != null) {
+			global = global.getParent();
+		}
+
+		global.addVariable(name, symbolInfo);
+	}
+
+	private Scope getGlobalScope() {
+		Scope global = scope;
+
+		while (global.isLocalScope()) {
+			global = global.getParent();
+		}
+
+		return global;
+	}
+
+	private boolean isDeclaredLocally(String name) {
+		return scope.isDeclared(name);
 	}
 
 	private static boolean implicitInt(DataType dataType) {

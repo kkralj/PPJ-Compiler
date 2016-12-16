@@ -14,6 +14,18 @@ public enum DataType {
 		return VOID;
 	}
 
+	public DataType toArray() {
+		if (this.equals(CHAR)) {
+			return CHAR_ARRAY;
+		} else if (this.equals(INT)) {
+			return INT_ARRAY;
+		} else if (this.equals(CONST_CHAR)) {
+			return CONST_CHAR_ARRAY;
+		}
+
+		return CONST_INT_ARRAY;
+	}
+
 	public String getPlainType() {
 		String type = toString();
 

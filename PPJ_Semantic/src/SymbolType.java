@@ -1,4 +1,4 @@
 
 public enum SymbolType {
-	VARIABLE, ARRAY, FUNCTION;
+	VARIABLE, ARRAY, FUNCTION, UNDEFINED;
 }
