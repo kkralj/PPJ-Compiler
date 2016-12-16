@@ -236,18 +236,24 @@ public class SemanticAnalyzer {
 	private void lista_parametara(Node root) {
 	}
 
-	private void definicija_funkcije(Node root) {
+	private void definicija_funkcije(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
 		// <definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA KR_VOID D_ZAGRADA
 		// <slozena_naredba>
 		// | <ime_tipa> IDN L_ZAGRADA <lista_parametara> D_ZAGRADA
 		// <slozena_naredba>
 
-		if (root.getChildren().get(3).getData().startsWith("KR_VOID")) {
-			Node ime_tipa = root.getChildren().get(0);
-			Node slozena_naredba = root.getChildren().get(5);
+		if (context.isProduction(
+				"<definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA KR_VOID D_ZAGRADA <slozena_naredba>")) {
+			check(context.child);
+			if (context.child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR)
+					|| context.child.getSymbolInfo().dataType.contains(DataType.CONST_CHAR)) {
+				throw new SemanticAnalyserException(
+						"<definicija_funkcije> ::= <ime_tipa> IDN L_ZAGRADA KR_VOID D_ZAGRADA <slozena_naredba>");
+			}
 
-			// 1. provjeri (<ime_tipa>)
-			// 2. <ime_tipa>.tip != const(T )
+			// 1. provjeri (<ime_tipa>)napravljeno
+			// 2. <ime_tipa>.tip != const(T )napravljeno
 			// 3. ne postoji prije definirana funkcija imena IDN.ime
 			// 4. ako postoji deklaracija imena IDN.ime u globalnom djelokrugu
 			// onda je pripadni
@@ -278,46 +284,90 @@ public class SemanticAnalyzer {
 
 	}
 
-	private void naredba_petlje(Node root) {
+	private void naredba_petlje(Node node) throws SemanticAnalyserException {
 		// <naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>
 		// | KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA
 		// <naredba>
 		// | KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> <izraz> D_ZAGRADA
 		// <naredba>
+		InternalNodeContext context = new InternalNodeContext(node);
 
-		if (root.getChildren().size() == 5) {
-			Node izraz = root.getChildren().get(2);
-			if (!implicitInt(izraz.getType())) {
-				throw new IllegalArgumentException("Greska u naredbi grananja.");
+		if (context.isProduction("<naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>")) {
+			check(context.child3);
+			if (!implicitInt(context.child3.getSymbolInfo().dataType.get(0))) {
+				throw new SemanticAnalyserException(
+						"<naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>");
 			}
-
+			check(node.getChildren().get(4));
+		} else if (context
+				.isProduction("<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA")) {
+			check(context.child3);
+			check(node.getChildren().get(3));
+			if (!implicitInt(node.getChildren().get(3).getSymbolInfo().dataType.get(0))) {
+				throw new SemanticAnalyserException(
+						"<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA");
+			}
+			check(node.getChildren().get(5));
 		} else {
-			Node izrazNaredba = root.getChildren().get(3);
-			if (!implicitInt(izrazNaredba.getType())) {
-				throw new IllegalArgumentException("Greska u naredbi grananja.");
+			check(context.child3);
+			check(node.getChildren().get(3));
+			if (!implicitInt(node.getChildren().get(3).getSymbolInfo().dataType.get(0))) {
+				throw new SemanticAnalyserException(
+						"<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> <izraz> D_ZAGRADA <naredba>");
 			}
+			check(node.getChildren().get(4));
+			check(node.getChildren().get(6));
 		}
 
 	}
 
-	private void vanjska_deklaracija(Node root) {
+	private void vanjska_deklaracija(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<vanjska_deklaracija> ::= <definicija_funkcije>")) {
+			check(context.child);
+		} else if (context.isProduction("<vanjska_deklaracija> ::= <deklaracija>")) {
+			check(context.child);
+		}
 	}
 
-	private void prijevodna_jedinica(Node root) {
-		// do nothing
+	private void prijevodna_jedinica(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<prijevodna_jedinica> ::= <vanjska_deklaracija>")) {
+			check(context.child);
+		} else if (context.isProduction("<prijevodna_jedinica> ::= <prijevodna_jedinica> <vanjska_deklaracija>")) {
+			check(context.child);
+			check(context.child2);
+		}
 	}
 
-	private void naredba_grananja(Node root) {
+	private void naredba_grananja(Node node) throws SemanticAnalyserException {
 		// <naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba>
 		// | KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba> KR_ELSE <naredba>
+		InternalNodeContext context = new InternalNodeContext(node);
 
-		Node izraz = root.getChildren().get(2);
-		if (!implicitInt(izraz.getType())) {
-			throw new IllegalArgumentException("Greska u naredbi grananja.");
+		if (context.isProduction("<naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba>")) {
+			check(context.child3);
+			if (!implicitInt(context.child3.getSymbolInfo().dataType.get(0))) {
+				throw new SemanticAnalyserException(
+						"<naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba>");
+			}
+			check(node.getChildren().get(4));
+		} else {
+			check(context.child3);
+			if (!implicitInt(context.child3.getSymbolInfo().dataType.get(0))) {
+				throw new SemanticAnalyserException(
+						"<naredba_grananja> ::= KR_IF L_ZAGRADA <izraz> D_ZAGRADA <naredba> KR_ELSE <naredba>");
+			}
+			check(node.getChildren().get(4));
+			check(node.getChildren().get(6));
 		}
+
 	}
 
 	private void izraz_naredba(Node root) {
+
 		// <izraz_naredba> ::= TOCKAZAREZ
 		// | <izraz> TOCKAZAREZ
 
@@ -554,21 +604,14 @@ public class SemanticAnalyzer {
 		}
 	}
 
-	private void specifikator_tipa(Node root) {
-		String childName = root.getChildren().get(0).getData();
-
-		if (childName.startsWith("KR_VOID")) {
-			root.setType("void");
-
-		} else if (childName.startsWith("KR_CHAR")) {
-			root.setType("char");
-
-		} else if (childName.startsWith("KR_INT")) {
-			root.setType("int");
-
-		} else {
-			throw new IllegalArgumentException("Nepostojeci <specifikator tipa>");
-
+	private void specifikator_tipa(Node node) {
+		InternalNodeContext context = new InternalNodeContext(node);
+		if (context.isProduction("<specifikator_tipa> ::= KR_VOID")) {
+			context.symbolInfo.dataType.add(DataType.VOID);
+		} else if (context.isProduction("<specifikator_tipa> ::= KR_CHAR")) {
+			context.symbolInfo.dataType.add(DataType.CHAR);
+		} else if (context.isProduction("<specifikator_tipa> ::= KR_INT")) {
+			context.symbolInfo.dataType.add(DataType.INT);
 		}
 
 	}
@@ -579,23 +622,27 @@ public class SemanticAnalyzer {
 	 * izračunati izvedeno svojstvo tip koje se koristi u produkcijama gdje se
 	 * <ime_tipa> pojavljuje s desne strane i dodatno će se onemogućiti tip
 	 * const void (koji je sintaksno ispravan, ali nema smisla).
+	 * 
+	 * @throws SemanticAnalyserException
 	 */
-	private void ime_tipa(Node root) {
+	private void ime_tipa(Node node) throws SemanticAnalyserException {
 		// <ime_tipa> ::= <specifikator_tipa>
 		// | KR_CONST <specifikator_tipa>
-
-		if (root.getChildren().size() == 1) {
-			Node specifikatorTipa = root.getChildren().get(0);
-			root.setType(specifikatorTipa.getType());
-
+		InternalNodeContext context = new InternalNodeContext(node);
+		if (context.isProduction("<ime_tipa> ::= <specifikator_tipa>")) {
+			check(context.child);
+			context.symbolInfo.dataType = context.child.getSymbolInfo().dataType;
 		} else {
-			Node specifikatorTipa = root.getChildren().get(1);
-			if (specifikatorTipa.getType().equals("void")) {
-				throw new IllegalArgumentException("Parameter cannot be void");
+			check(context.child2);
+			if (context.child2.getSymbolInfo().dataType.contains(DataType.VOID)) {
+				throw new SemanticAnalyserException("<ime_tipa> ::= KR_CONST <specifikator_tipa>");
 			}
 
-			root.setType(specifikatorTipa.getType());
-			root.isConstant = true;
+			if (context.child2.getSymbolInfo().dataType.contains(DataType.INT)) {
+				context.symbolInfo.dataType.add(DataType.CONST_INT);
+			} else if (context.child2.getSymbolInfo().dataType.contains(DataType.CHAR)) {
+				context.symbolInfo.dataType.add(DataType.CONST_CHAR);
+			}
 		}
 
 	}
@@ -651,7 +698,6 @@ public class SemanticAnalyzer {
 		// | OP_INC <unarni_izraz>
 		// | OP_DEC <unarni_izraz>
 		// | <unarni_operator> <cast_izraz>
-
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		if (context.isProduction("<unarni_izraz> ::= <postfiks_izraz>")) {
