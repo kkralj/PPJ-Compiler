@@ -3,72 +3,82 @@ import java.util.Map;
 
 public class Scope {
 
-	private Map<String, SymbolInfo> symbolTable = new HashMap<>();
-	private Scope parent;
+    private Map<String, SymbolInfo> symbolTable = new HashMap<>();
+    private Scope parent;
 
-	public Scope(Scope parent) {
-		this.parent = parent;
-	}
+    public Scope(Scope parent) {
+        this.parent = parent;
+    }
 
-	public Map<String, SymbolInfo> getSymbolTable() {
-		return symbolTable;
-	}
+    public Map<String, SymbolInfo> getSymbolTable() {
+        return symbolTable;
+    }
 
-	public SymbolInfo addVariable(String symbolName) {
-		SymbolInfo symbolInfo = new SymbolInfo();
+    public SymbolInfo addVariable(String symbolName) {
+        SymbolInfo symbolInfo = new SymbolInfo();
 
-		symbolTable.put(symbolName, symbolInfo);
+        symbolTable.put(symbolName, symbolInfo);
 
-		return symbolInfo;
-	}
+        return symbolInfo;
+    }
 
-	public void addVariable(String name, SymbolInfo symbolInfo) {
-		symbolTable.put(name, symbolInfo);
-	}
+    public void addVariable(String name, SymbolInfo symbolInfo) {
+        symbolTable.put(name, symbolInfo);
+    }
 
-	public boolean isDeclared(String name) {
-		Scope current = this;
+    public boolean isDeclared(String name) {
+        Scope current = this;
 
-		while (current != null) {
-			if (current.symbolExists(name)) {
-				return true;
-			}
-			current = current.getParent();
-		}
+        while (current != null) {
+            if (current.symbolExists(name)) {
+                return true;
+            }
+            current = current.getParent();
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	public boolean isLocalScope() {
-		return parent != null;
-	}
+    public boolean isLocalScope() {
+        return parent != null;
+    }
 
-	public boolean isFunctionDefined(String name) {
-		Scope scope = this;
+    public boolean isFunctionDefined(String name) {
+        Scope scope = this;
 
-		while (this.parent != null) {
-			scope = this.parent;
-		}
+        while (this.parent != null) {
+            scope = this.parent;
+        }
 
-		SymbolInfo symbolInfo = scope.getSymbolInfo(name);
+        SymbolInfo symbolInfo = scope.getSymbolInfo(name);
 
-		if (symbolInfo != null) {
-			return symbolInfo.isDefined;
-		}
+        if (symbolInfo != null) {
+            return symbolInfo.isDefined;
+        }
 
-		return false;
-	}
+        return false;
+    }
 
-	private boolean symbolExists(String name) {
-		return symbolTable.containsKey(name);
-	}
+    private boolean symbolExists(String name) {
+        return symbolTable.containsKey(name);
+    }
 
-	public SymbolInfo getSymbolInfo(String name) {
-		return symbolTable.get(name);
-	}
+    public SymbolInfo getSymbolInfo(String name) {
+        Scope scope = this;
 
-	public Scope getParent() {
-		return parent;
-	}
+        while (scope != null) {
+            SymbolInfo symbolInfo = scope.getSymbolTable().get(name);
+            if (symbolInfo != null) {
+                return symbolInfo;
+            }
+            scope = scope.getParent();
+        }
+
+        return null;
+    }
+
+    public Scope getParent() {
+        return parent;
+    }
 
 }
