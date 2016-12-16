@@ -1,8 +1,9 @@
+import java.util.HashMap;
 import java.util.Map;
 
 public class Scope {
 
-	private Map<String, SymbolInfo> symbolTable;
+	private Map<String, SymbolInfo> symbolTable = new HashMap<>();
 	private Scope parent;
 
 	public Scope(Scope parent) {
