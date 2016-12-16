@@ -9,6 +9,10 @@ public class Scope {
 		this.parent = parent;
 	}
 
+	public Map<String, SymbolInfo> getSymbolTable() {
+		return symbolTable;
+	}
+
 	public SymbolInfo addVariable(String symbolName) {
 		SymbolInfo symbolInfo = new SymbolInfo();
 

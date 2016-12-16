@@ -2,6 +2,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetEncoder;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Stack;
 
 import com.sun.org.apache.xalan.internal.xsltc.compiler.sym;
@@ -29,9 +30,37 @@ public class SemanticAnalyzer {
 		this.syntaxTree = syntaxTree;
 	}
 
-	public void analyze() throws SemanticAnalyserException {
+	public void analyze() {
 		this.scope = new Scope(null); // global context, no parent
-		check(syntaxTree.getRoot());
+		try {
+			check(syntaxTree.getRoot());
+		} catch (SemanticAnalyserException e) {
+			System.out.println(e.getMessage());
+		}
+	}
+
+	private void postAnalysis() throws SemanticAnalyserException {
+		// je li main deklariran?
+
+		scope = getGlobalScope();
+
+		if (!scope.isFunctionDefined("main")) {
+			throw new SemanticAnalyserException("main");
+		}
+
+		List<DataType> mainSignature = scope.getSymbolInfo("main").dataType;
+
+		if (mainSignature.size() != 2 || !mainSignature.get(0).equals(DataType.INT)
+				|| !mainSignature.get(1).equals(DataType.VOID)) {
+			throw new SemanticAnalyserException("main");
+		}
+
+		// jesu li sve deklarirane funkcije definirane?
+
+		if (scope.getSymbolTable().entrySet().stream().anyMatch(
+				entry -> entry.getValue().symbolType.equals(SymbolType.FUNCTION) && !entry.getValue().isDefined)) {
+			throw new SemanticAnalyserException("funkcija");
+		}
 	}
 
 	private boolean check(Node node) throws SemanticAnalyserException {
