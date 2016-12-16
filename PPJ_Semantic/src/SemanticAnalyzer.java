@@ -408,16 +408,34 @@ public class SemanticAnalyzer {
 	 * nelokalnim imenima se pristupa u ugniježdujućem bloku (i potencijalno
 	 * tako dalje sve do globalnog djelokruga)
 	 */
-	private void slozena_naredba(Node root) {
+	private void slozena_naredba(Node node) throws SemanticAnalyserException {
 		// <slozena_naredba> ::= L_VIT_ZAGRADA <lista_naredbi> D_VIT_ZAGRADA
 		// | L_VIT_ZAGRADA <lista_deklaracija> <lista_naredbi> D_VIT_ZAGRADA
 
-		if (root.getChildren().size() == 3) {
-			// do nothing
-		} else {
-			// do nothing
-		}
+		InternalNodeContext context = new InternalNodeContext(node);
 
+		// stvori novi scope
+
+		if (context.isProduction("<slozena_naredba> ::= L_VIT_ZAGRADA <lista_naredbi> D_VIT_ZAGRADA")) {
+
+			scope = new Scope(scope);
+
+			if (!check(node.getChild(1))) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			scope = scope.getParent();
+		} else if (context.isProduction(
+				"<slozena_naredba> ::= L_VIT_ZAGRADA <lista_deklaracija> <lista_naredbi> D_VIT_ZAGRADA")) {
+
+			scope = new Scope(scope);
+
+			if (!check(node.getChild(1)) || !check(node.getChild(2))) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			scope = scope.getParent();
+		}
 	}
 
 	private void log_ili_izraz(Node node) throws SemanticAnalyserException {
