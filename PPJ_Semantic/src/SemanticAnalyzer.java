@@ -552,55 +552,85 @@ public class SemanticAnalyzer {
 		}
 	}
 
-	private void jednakosni_izraz(Node root) {
+	private void jednakosni_izraz(Node node) throws SemanticAnalyserException {
 		// <jednakosni_izraz> ::= <odnosni_izraz>
 		// | <jednakosni_izraz> OP_EQ <odnosni_izraz>
 		// | <jednakosni_izraz> OP_NEQ <odnosni_izraz>
 
-		if (root.getChildren().size() == 1) {
-			Node child = root.getChildren().get(0);
-			root.setType(child.getType());
-			root.setLeftOK(child.isLeftOK());
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<jednakosni_izraz> ::= <odnosni_izraz>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+		} else {
+			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().getType().implicit(DataType.INT)
+					|| !check(node.getChild(2)) || !node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.add(DataType.INT);
+			context.symbolInfo.l_expr = false;
 		}
 	}
 
-	private void odnosni_izraz(Node root) {
+	private void odnosni_izraz(Node node) throws SemanticAnalyserException {
 		// <odnosni_izraz> ::= <aditivni_izraz>
 		// | <odnosni_izraz> OP_LT <aditivni_izraz>
 		// | <odnosni_izraz> OP_GT <aditivni_izraz>
 		// | <odnosni_izraz> OP_LTE <aditivni_izraz>
 		// | <odnosni_izraz> OP_GTE <aditivni_izraz>
 
-		if (root.getChildren().size() == 1) {
-			Node child = root.getChildren().get(0);
-			root.setType(child.getType());
-			root.setLeftOK(child.isLeftOK());
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<odnosni_izraz> ::= <aditivni_izraz>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+		} else {
+			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().dataType.get(0).implicit(DataType.INT)
+					|| !check(node.getChild(2))
+					|| !node.getChild(2).getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.add(DataType.INT);
+			context.symbolInfo.l_expr = false;
 		}
 	}
 
-	private void multiplikativni_izraz(Node root) {
+	private void multiplikativni_izraz(Node node) throws SemanticAnalyserException {
 		// <multiplikativni_izraz> ::= <cast_izraz>
 		// | <multiplikativni_izraz> OP_PUTA <cast_izraz>
 		// | <multiplikativni_izraz> OP_DIJELI <cast_izraz>
 		// | <multiplikativni_izraz> OP_MOD <cast_izraz>
 
-		if (root.getChildren().size() == 1) {
-			Node child = root.getChildren().get(0);
-			root.setType(child.getType());
-			root.setLeftOK(child.isLeftOK());
+		InternalNodeContext context = new InternalNodeContext(node);
 
-		} else { // ostale produkcije imaju iste akcije
-
-			Node multiplikativniIzraz = root.getChildren().get(0);
-			Node castIzraz = root.getChildren().get(2);
-
-			if (!implicitInt(multiplikativniIzraz.getType()) || !implicitInt(castIzraz.getType())) {
-				throw new IllegalArgumentException("Izraz mora biti implicitni int.");
+		if (context.isProduction("<multiplikativni_izraz> ::= <cast_izraz>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
 			}
 
-			root.setType("int");
-			root.setLeftOK(false);
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+		} else if (context.isProduction("<multiplikativni_izraz> ::= <multiplikativni_izraz> OP_PUTA <cast_izraz>")
+				|| context.isProduction("<multiplikativni_izraz> ::= <multiplikativni_izraz> OP_DIJELI <cast_izraz>")
+				|| context.isProduction("<multiplikativni_izraz> ::= <multiplikativni_izraz> OP_MOD <cast_izraz>")) {
+			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().dataType.get(0).implicit(DataType.INT)
+					|| !check(node.getChild(2))
+					|| !node.getChild(2).getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
 
+			context.symbolInfo.dataType.add(DataType.INT);
+			context.symbolInfo.l_expr = false;
 		}
 	}
 
@@ -635,7 +665,7 @@ public class SemanticAnalyzer {
 		} else {
 			check(context.child2);
 			if (context.child2.getSymbolInfo().dataType.contains(DataType.VOID)) {
-				throw new SemanticAnalyserException("<ime_tipa> ::= KR_CONST <specifikator_tipa>");
+				throw new SemanticAnalyserException(node);
 			}
 
 			if (context.child2.getSymbolInfo().dataType.contains(DataType.INT)) {
@@ -650,25 +680,30 @@ public class SemanticAnalyzer {
 	/**
 	 * Nezavršni znak <cast_izraz> generira izraze s opcionalnim cast
 	 * operatorom.
+	 * 
+	 * @throws SemanticAnalyserException
 	 */
-	private void cast_izraz(Node root) {
+	private void cast_izraz(Node node) throws SemanticAnalyserException {
 		// <cast_izraz> ::= <unarni_izraz>
 		// | L_ZAGRADA <ime_tipa> D_ZAGRADA <cast_izraz>
 
-		if (root.getChildren().size() == 1) {
+		InternalNodeContext context = new InternalNodeContext(node);
 
-			Node child = root.getChildren().get(0);
-			root.setType(child.getType());
-			root.setLeftOK(child.isLeftOK());
+		if (context.isProduction("<cast_izraz> ::= <unarni_izraz>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
+			}
 
-		} else {
-			// tip ← <ime_tipa>.tip
-			// l-izraz ← 0
-			// 1. provjeri (<ime_tipa>)
-			// 2. provjeri (<cast_izraz>)
-			// 3. <cast_izraz>.tip se može pretvoriti u <ime_tipa>.tip po
-			// poglavlju 4.3.1
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+		} else if (context.isProduction("<cast_izraz> ::= L_ZAGRADA <ime_tipa> D_ZAGRADA <cast_izraz>")) {
+			if (!check(node.getChild(1)) || !check(node.getChild(3)) || !node.getChild(3).getSymbolInfo().dataType
+					.get(0).implicit(node.getChild(1).getSymbolInfo().dataType.get(0))) {
+				throw new SemanticAnalyserException(node);
+			}
 
+			context.symbolInfo.dataType.addAll(node.getChild(1).getSymbolInfo().dataType);
+			context.symbolInfo.l_expr = false;
 		}
 	}
 
@@ -894,27 +929,29 @@ public class SemanticAnalyzer {
 		}
 	}
 
-	private void aditivni_izraz(Node root) {
+	private void aditivni_izraz(Node node) throws SemanticAnalyserException {
 		// <aditivni_izraz> ::= <multiplikativni_izraz>
 		// | <aditivni_izraz> PLUS <multiplikativni_izraz>
 		// | <aditivni_izraz> MINUS <multiplikativni_izraz>
 
-		if (root.getChildren().size() == 1) {
-			Node child = root.getChildren().get(0);
-			root.setType(child.getType());
-			root.setLeftOK(child.isLeftOK());
+		InternalNodeContext context = new InternalNodeContext(node);
 
-		} else { // same for both cases
-
-			Node aditivniIzraz = root.getChildren().get(0);
-			Node multiplikativniIzraz = root.getChildren().get(2);
-
-			if (!implicitInt(aditivniIzraz.getType()) || !implicitInt(multiplikativniIzraz.getType())) {
-				throw new IllegalArgumentException("Izraz mora biti implicitni int.");
+		if (context.isProduction("<aditivni_izraz> ::= <multiplikativni_izraz>")) {
+			if (!check(context.firstChild)) {
+				throw new SemanticAnalyserException(node);
 			}
 
-			root.setType("int");
-			root.setLeftOK(false);
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+		} else if (context.isProduction("<aditivni_izraz> ::= <aditivni_izraz> PLUS <multiplikativni_izraz>")
+				|| context.isProduction("<aditivni_izraz> ::= <aditivni_izraz> MINUS <multiplikativni_izraz>")) {
+			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().dataType.get(0).implicit(DataType.INT)
+					|| !check(node.getChild(2))
+					|| node.getChild(2).getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
+
+			context.symbolInfo.dataType.add(DataType.INT);
+			context.symbolInfo.l_expr = false;
 		}
 	}
 
@@ -936,20 +973,6 @@ public class SemanticAnalyzer {
 
 	private static boolean implicitInt(DataType dataType) {
 		return dataType == DataType.CHAR || dataType == DataType.INT;
-	}
-
-	/**
-	 * Provjeravam vrijedi li relacija X~Y tj. moze li se X pretvorit implicitno
-	 * u Y ili obrnuto.
-	 * 
-	 * @param dataType1
-	 * @param dataType2
-	 * @return
-	 */
-	private static boolean implicit(DataType dataType1, DataType dataType2) {
-		if (dataType1.equals(DataType.CHAR) && dataType2.equals(DataType.INT))
-			;
-		// TODO
 	}
 
 	private static boolean validIntRange(String value) {

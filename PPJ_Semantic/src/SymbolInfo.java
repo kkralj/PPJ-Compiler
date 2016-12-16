@@ -28,6 +28,20 @@ public class SymbolInfo {
 		this.dataType.addAll(dataType);
 	}
 
+	/**
+	 * Returns first data type in data type list. Should be used only with
+	 * variables!
+	 * 
+	 * @return First element from dataType list.
+	 */
+	public DataType getType() {
+		if (dataType.size() == 0 || dataType.size() > 1) {
+			throw new IllegalArgumentException("This symbol has no type yet or is a function!");
+		}
+
+		return dataType.get(0);
+	}
+
 	public List<DataType> dataTypeTail() {
 		return dataType.subList(1, dataType.size() - 1);
 	}
