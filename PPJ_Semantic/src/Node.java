@@ -40,7 +40,8 @@ public class Node {
 
 		for (Node child : children) {
 			if (child.isLeaf()) {
-				production += " " + child.label.split(" ", 2)[0];
+				production += " " + child.label.split(" ")[0];
+
 			} else {
 				production += " " + child.label;
 			}
@@ -86,11 +87,11 @@ public class Node {
 	}
 
 	/**
-	 * Returns production string where leafs are represented as
-	 * TOKEN_TYPE(<line>,<value>).
+	 * Returns production string where leafs are represented as TOKEN_TYPE(
+	 * <line>,<value>).
 	 * 
-	 * @return Produciton string where leafs are represented as
-	 *         TOKEN_TYPE(<line>,<value>).
+	 * @return Produciton string where leafs are represented as TOKEN_TYPE(
+	 *         <line>,<value>).
 	 */
 	public String getFullProduction() {
 		String production = label + " ::=";
