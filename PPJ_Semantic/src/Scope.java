@@ -64,7 +64,13 @@ public class Scope {
 	}
 
 	public SymbolInfo getSymbolInfo(String name) {
-		return symbolTable.get(name);
+		Scope scope = this;
+
+		while (!scope.isDeclared(name)) {
+			scope = scope.parent;
+		}
+
+		return scope.symbolTable.get(name);
 	}
 
 	public Scope getParent() {

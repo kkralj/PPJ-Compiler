@@ -332,6 +332,7 @@ public class SemanticAnalyzer {
 				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<init_deklarator> ::= <izravni_deklarator> OP_PRIDRUZI <inicijalizator>")) {
+			
 			check(context.firstChild);
 
 			check(node.getChild(2));
@@ -1330,7 +1331,7 @@ public class SemanticAnalyzer {
 				|| context.isProduction("<aditivni_izraz> ::= <aditivni_izraz> MINUS <multiplikativni_izraz>")) {
 			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().dataType.get(0).implicit(DataType.INT)
 					|| !check(node.getChild(2))
-					|| node.getChild(2).getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
+					|| !node.getChild(2).getSymbolInfo().dataType.get(0).implicit(DataType.INT)) {
 				throw new SemanticAnalyserException(node);
 			}
 
