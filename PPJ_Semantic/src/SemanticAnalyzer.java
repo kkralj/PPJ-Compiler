@@ -447,7 +447,24 @@ public class SemanticAnalyzer {
 
 	}
 
-	private void lista_izraza_pridruzivanja(Node node) {
+	private void lista_izraza_pridruzivanja(Node node) throws SemanticAnalyserException {
+		InternalNodeContext context = new InternalNodeContext(node);
+
+		if (context.isProduction("<lista_izraza_pridruzivanja> ::= <izraz_pridruzivanja>")) {
+			check(context.firstChild);
+
+			context.symbolInfo.dataType.add(context.firstChild.getSymbolInfo().getType());
+			context.symbolInfo.elemCount = 1;
+		} else if (context.isProduction(
+				"<lista_izraza_pridruzivanja> ::= <lista_izraza_pridruzivanja> ZAREZ <izraz_pridruzivanja>")) {
+			check(context.firstChild);
+			check(node.getChild(2));
+
+			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+			context.symbolInfo.dataType.add(node.getChild(2).getSymbolInfo().getType());
+
+			context.symbolInfo.elemCount = context.firstChild.getSymbolInfo().elemCount + 1;
+		}
 	}
 
 	private void lista_parametara(Node node) throws SemanticAnalyserException {
