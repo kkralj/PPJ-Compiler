@@ -1230,8 +1230,7 @@ public class SemanticAnalyzer {
 		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA D_ZAGRADA")) {
 			Node child = context.firstChild;
 			check(child);
-			if (!child.getSymbolInfo().symbolType.equals(SymbolType.FUNCTION)
-					|| child.getSymbolInfo().dataType.size() != 2) {
+			if (child.getSymbolInfo().dataType.size() != 2) {
 				throw new SemanticAnalyserException(node);
 			}
 			context.symbolInfo.dataType.add(child.getSymbolInfo().dataType.get(0));

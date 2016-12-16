@@ -40,15 +40,9 @@ public class SymbolInfo {
 	 * @return First element from dataType list.
 	 */
 	public DataType getType() {
-<<<<<<< HEAD
 		if (dataType.size() == 0) {
 			throw new IllegalArgumentException("This symbol has no type yet or is a function!");
 		}
-=======
-//		if (dataType.size() == 0 || dataType.size() > 1) {
-//			throw new IllegalArgumentException("This symbol has no type yet or is a function!");
-//		}
->>>>>>> d5a57b00439ba26da6bf3042b83458f72df8cdfd
 
 		return dataType.get(0);
 	}
