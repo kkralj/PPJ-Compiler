@@ -44,14 +44,34 @@ public enum DataType {
 	}
 
 	public boolean implicit(DataType other) {
-		String thisT = this.getPlainType();
-		String otherT = other.getPlainType();
+		// String thisT = this.getPlainType();
+		// String otherT = other.getPlainType();
+		//
+		// boolean case1 = (!isArray() && !other.isArray()) &&
+		// (thisT.equals(otherT))
+		// && ((isConst() && !other.isConst()) || (!isConst() &&
+		// other.isConst()));
+		// boolean case2 = !isArray() && !other.isArray() &&
+		// thisT.equals("CHAR") && otherT.equals("INT");
+		// boolean case3 = isArray() && !isConst() && other.isArray() &&
+		// other.isConst() && thisT.equals(otherT);
+		//
+		// return case1 || case2 || case3;
 
-		boolean case1 = (!isArray() && !other.isArray()) && (thisT.equals(otherT))
-				&& ((isConst() && !other.isConst()) || (!isConst() && other.isConst()));
-		boolean case2 = !isArray() && !other.isArray() && thisT.equals("CHAR") && otherT.equals("INT");
-		boolean case3 = isArray() && !isConst() && other.isArray() && other.isConst() && thisT.equals(otherT);
-
-		return case1 || case2 || case3;
+		if ((toString().equals("CONST_INT") || toString().equals("INT"))
+				&& (other.toString().equals("INT") || other.toString().equals("CONST_INT"))) {
+			return true;
+		} else if ((toString().equals("CONST_CHAR") || toString().equals("CHAR"))
+				&& (other.toString().equals("CHAR") || other.toString().equals("CONST_CHAR")
+						|| other.toString().equals("INT") || other.toString().equals("CONST_INT"))) {
+			return true;
+		} else if (toString().equals("CHAR_ARRAY")
+				&& (other.toString().equals("CHAR_ARRAY") || other.toString().equals("CONST_CHAR_ARRAY"))) {
+			return true;
+		} else if (toString().equals("INT_ARRAY")
+				&& (other.toString().equals("INT_ARRAY") || other.toString().equals("CONST_INT_ARRAY"))) {
+			return true;
+		}
+		return false;
 	}
 }
