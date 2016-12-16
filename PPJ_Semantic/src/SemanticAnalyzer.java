@@ -455,10 +455,10 @@ public class SemanticAnalyzer {
 
 			Node charArrayNode = goesToCharArray(node);
 
-			// there can be spaces in string?
-			String charArray = charArrayNode.getLabel().split(" ", 3)[2];
+			if (charArrayNode != null) {
+				// there can be spaces in string?
+				String charArray = charArrayNode.getLabel().split(" ", 3)[2];
 
-			if (charArray != null) {
 				// don't count ""
 				context.symbolInfo.elemCount = charArray.length() - 2;
 
@@ -1380,6 +1380,7 @@ public class SemanticAnalyzer {
 
 			if (node.getLabel().equals("<definicija_funkcije>")) {
 				signature = getGlobalScope().getSymbolInfo(node.getChild(1).getTokenName()).dataType;
+				break;
 			}
 		}
 
