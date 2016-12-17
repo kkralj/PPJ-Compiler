@@ -14,6 +14,28 @@ public enum DataType {
 		return VOID;
 	}
 
+	/**
+	 * Returns type without array modificator.
+	 * 
+	 * @return Type without array modificator.
+	 */
+	public DataType removeArray() {
+		if (!isArray())
+			return this;
+
+		if (getPlainType().equals(INT)) {
+			if (isConst())
+				return CONST_INT;
+			else
+				return INT;
+		} else {
+			if (isConst())
+				return CONST_CHAR;
+			else
+				return CHAR;
+		}
+	}
+
 	public DataType toArray() {
 		if (this.equals(CHAR)) {
 			return CHAR_ARRAY;
