@@ -973,9 +973,8 @@ public class SemanticAnalyzer {
 				throw new SemanticAnalyserException(node);
 			}
 			check(node.getChild(2));
-			
-			if (!node.getChild(2).getSymbolInfo().getType()
-							.implicit(context.firstChild.getSymbolInfo().getType())) {
+
+			if (!node.getChild(2).getSymbolInfo().getType().implicit(context.firstChild.getSymbolInfo().getType())) {
 				throw new SemanticAnalyserException(node);
 			}
 
@@ -1129,8 +1128,11 @@ public class SemanticAnalyzer {
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
 		} else if (context.isProduction("<cast_izraz> ::= L_ZAGRADA <ime_tipa> D_ZAGRADA <cast_izraz>")) {
-			if (!check(node.getChild(1)) || !check(node.getChild(3)) || !node.getChild(3).getSymbolInfo().dataType
-					.get(0).implicit(node.getChild(1).getSymbolInfo().dataType.get(0))) {
+			check(node.getChild(1));
+			check(node.getChild(3));
+
+			if (node.getChild(3).getSymbolInfo().dataType.size() > 1 || !node.getChild(3).getSymbolInfo().getType()
+					.explicit(node.getChild(1).getSymbolInfo().getType())) {
 				throw new SemanticAnalyserException(node);
 			}
 

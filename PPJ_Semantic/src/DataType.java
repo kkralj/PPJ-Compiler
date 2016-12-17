@@ -84,6 +84,32 @@ public enum DataType {
 		return this.toString().contains("ARRAY");
 	}
 
+	/**
+	 * Cast operator explicit.
+	 * 
+	 * @param other
+	 * @return
+	 */
+	public boolean explicit(DataType other) {
+		if ((toString().equals("CONST_INT") || toString().equals("INT"))
+				&& (other.toString().equals("INT") || other.toString().equals("CONST_INT")
+						|| (other.toString().equals("CHAR") || other.toString().equals("CONST_CHAR")))) {
+			return true;
+		} else if ((toString().equals("CONST_CHAR") || toString().equals("CHAR"))
+				&& (other.toString().equals("CHAR") || other.toString().equals("CONST_CHAR")
+						|| other.toString().equals("INT") || other.toString().equals("CONST_INT"))) {
+			return true;
+		} else if (toString().equals("CHAR_ARRAY")
+				&& (other.toString().equals("CHAR_ARRAY") || other.toString().equals("CONST_CHAR_ARRAY"))) {
+			return true;
+		} else if (toString().equals("INT_ARRAY")
+				&& (other.toString().equals("INT_ARRAY") || other.toString().equals("CONST_INT_ARRAY")
+						|| other.toString().equals("CHAR_ARRAY") || other.toString().equals(CONST_CHAR_ARRAY))) {
+			return true;
+		}
+		return false;
+	}
+
 	public boolean implicit(DataType other) {
 		// String thisT = this.getPlainType();
 		// String otherT = other.getPlainType();
