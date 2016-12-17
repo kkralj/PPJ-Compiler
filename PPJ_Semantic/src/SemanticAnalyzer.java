@@ -351,7 +351,7 @@ public class SemanticAnalyzer {
                 List<DataType> initializerTypes = node.getChild(2).getSymbolInfo().dataType;
 
                 for (DataType initDataType : initializerTypes) {
-                    if (!initDataType.implicit(dataType)) {
+                    if (!initDataType.implicit(dataType.removeArray())) {
                         throw new SemanticAnalyserException(node);
                     }
                 }
@@ -1300,12 +1300,7 @@ public class SemanticAnalyzer {
         if (context.isProduction("<primarni_izraz> ::= IDN")) {
             String name = context.firstChild.getTokenName();
 
-//            if (name.equals("main")) {
-//                System.out.println("deb");
-//            }
-
             if (scope.isDeclared(name)) {
-                context.symbolInfo.symbolType = scope.getSymbolInfo(name).symbolType;
                 context.symbolInfo.dataType.addAll(scope.getSymbolInfo(name).dataType);
                 context.symbolInfo.l_expr = scope.getSymbolInfo(name).l_expr;
             } else {
