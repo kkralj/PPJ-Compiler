@@ -12,7 +12,7 @@ for f in $(find $TEST_FOLDER_PATH -name '*.in'); do
 java -cp $CLASS_FOLDER_PATH SemantickiAnalizator < ${f: :-3}".in" > $SOURCE_FOLDER_PATH/out.txt 2>&1;
 RESULT=$(diff $SOURCE_FOLDER_PATH/out.txt ${f: :-3}".out" -q -b);
 if [[ $RESULT = *[!\ ]* ]]; then
-  #echo "ERROR: "${f::-8};
+  echo "ERROR: "${f::-8};
   total=$((total + 1));
   
   #break;
