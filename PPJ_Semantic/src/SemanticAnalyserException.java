@@ -1,5 +1,6 @@
 
 public class SemanticAnalyserException extends Exception {
+	private static final long serialVersionUID = 1L;
 	private Node node = null;
 	private String message = null;
 

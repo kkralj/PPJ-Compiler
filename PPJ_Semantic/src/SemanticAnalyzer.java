@@ -291,9 +291,6 @@ public class SemanticAnalyzer {
 		if (context.isProduction("<deklaracija> ::= <ime_tipa> <lista_init_deklaratora> TOCKAZAREZ")) {
 			check(context.firstChild);
 
-			// uz nasljedno svojstvo <lista_init_deklaratora>.ntip ←
-			// <ime_tipa>.tip
-
 			inheritableType.push(context.firstChild.getSymbolInfo().getType());
 			check(node.getChild(1));
 			inheritableType.pop();
@@ -623,7 +620,7 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <naredba_skoka> generira continue, break i return naredbe.
+	 * Nezavrsni znak <naredba_skoka> generira continue, break i return naredbe.
 	 */
 	private void naredba_skoka(Node node) throws SemanticAnalyserException {
 		// <naredba_skoka> ::= KR_CONTINUE TOCKAZAREZ
@@ -805,9 +802,9 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <slozena_naredba> predstavlja blok naredbi koji opcionalno
-	 * počinje lis- tom deklaracija. Svaki blok je odvojeni djelokrug, a
-	 * nelokalnim imenima se pristupa u ugniježdujućem bloku (i potencijalno
+	 * Nezavrsni znak <slozena_naredba> predstavlja blok naredbi koji opcionalno
+	 * pocinje lis- tom deklaracija. Svaki blok je odvojeni djelokrug, a
+	 * nelokalnim imenima se pristupa u ugnijezdujucem bloku (i potencijalno
 	 * tako dalje sve do globalnog djelokruga)
 	 */
 	private void slozena_naredba(Node node) throws SemanticAnalyserException {
@@ -1102,10 +1099,10 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <ime_tipa> generira imena opcionalno const-kvalificiranih
-	 * brojevnih ti- pova i ključnu riječ void. U ovim produkcijama će se
-	 * izračunati izvedeno svojstvo tip koje se koristi u produkcijama gdje se
-	 * <ime_tipa> pojavljuje s desne strane i dodatno će se onemogućiti tip
+	 * Nezavrsni znak <ime_tipa> generira imena opcionalno const-kvalificiranih
+	 * brojevnih ti- pova i kljucnu rijec void. U ovim produkcijama ce se
+	 * izracunati izvedeno svojstvo tip koje se koristi u produkcijama gdje se
+	 * <ime_tipa> pojavljuje s desne strane i dodatno ce se onemoguciti tip
 	 * const void (koji je sintaksno ispravan, ali nema smisla).
 	 * 
 	 * @throws SemanticAnalyserException
@@ -1139,7 +1136,7 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <cast_izraz> generira izraze s opcionalnim cast
+	 * Nezavrsni znak <cast_izraz> generira izraze s opcionalnim cast
 	 * operatorom.
 	 * 
 	 * @throws SemanticAnalyserException
@@ -1167,9 +1164,9 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <unarni_operator> generira aritmetičke (PLUS i MINUS),
-	 * bitovne (OP_TILDA) i logičke (OP_NEG) prefiks unarne operatore. Kako u
-	 * ovim produkcijama u semantičkoj analizi ne treba ništa provjeriti,
+	 * Nezavrsni znak <unarni_operator> generira aritmeticke (PLUS i MINUS),
+	 * bitovne (OP_TILDA) i logicke (OP_NEG) prefiks unarne operatore. Kako u
+	 * ovim produkcijama u semantickoj analizi ne treba nista provjeriti,
 	 * produkcije ovdje nisu navedene.
 	 */
 	private void unarni_operator(Node node) {
@@ -1182,7 +1179,7 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <unarni_izraz> generira izraze s opcionalnim prefiks
+	 * Nezavrsni znak <unarni_izraz> generira izraze s opcionalnim prefiks
 	 * unarnim operatorima.
 	 * 
 	 * @throws SemanticAnalyserException
@@ -1222,9 +1219,9 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <lista_argumenata> generira listu argumenata za poziv
-	 * funkcije, a za razliku od nezavršnih znakova koji generiraju izraze, imat
-	 * će svojsto tipovi koje predstavlja listu tipova argumenata, s lijeva na
+	 * Nezavrsni znak <lista_argumenata> generira listu argumenata za poziv
+	 * funkcije, a za razliku od nezavrsnih znakova koji generiraju izraze, imat
+	 * ce svojsto tipovi koje predstavlja listu tipova argumenata, s lijeva na
 	 * desno.
 	 * 
 	 * @throws SemanticAnalyserException
@@ -1253,7 +1250,7 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <postfiks_izraz> generira neki primarni izraz s
+	 * Nezavrsni znak <postfiks_izraz> generira neki primarni izraz s
 	 * opcionalnim postfiks- operatorima.
 	 * 
 	 * @throws SemanticAnalyserException
@@ -1335,7 +1332,7 @@ public class SemanticAnalyzer {
 	}
 
 	/**
-	 * Nezavršni znak <primarni_izraz> generira najjednostavnije izraze koji se
+	 * Nezavrsni znak <primarni_izraz> generira najjednostavnije izraze koji se
 	 * sastoje od jednog identifikatora, neke vrste konstante ili izraza u
 	 * zagradi.
 	 * 
