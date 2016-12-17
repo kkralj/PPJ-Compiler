@@ -463,8 +463,8 @@ public class SemanticAnalyzer {
 				// there can be spaces in string?
 				String charArray = charArrayNode.getLabel().split(" ", 3)[2];
 
-				// don't count ""
-				context.symbolInfo.elemCount = charArray.length() - 2;
+				// don't count "", but count \0
+				context.symbolInfo.elemCount = charArray.length() - 2 + 1;
 
 				for (int i = 0; i < context.symbolInfo.elemCount; i++) {
 					context.symbolInfo.dataType.add(DataType.CHAR);
@@ -575,6 +575,8 @@ public class SemanticAnalyzer {
 
 			String functionName = node.getChild(1).getTokenName();
 
+			// ako je povratni tip s const-modifikatorom ili ako je funkcije vec
+			// definirana
 			if (context.firstChild.getSymbolInfo().getType().isConst() || scope.isFunctionDefined(functionName)) {
 				throw new SemanticAnalyserException(node);
 			}
@@ -582,6 +584,10 @@ public class SemanticAnalyzer {
 			check(node.getChild(3));
 
 			SymbolInfo symbolInfo;
+
+			if (scope.isLocalScope()) {
+				throw new SemanticAnalyserException(node);
+			}
 
 			if (scope.isDeclared(functionName)) {
 				symbolInfo = scope.getSymbolInfo(functionName);
@@ -666,7 +672,7 @@ public class SemanticAnalyzer {
 				.isProduction("<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA")) {
 			check(node.getChild(2));
 			check(node.getChild(3));
-			if (!node.getSymbolInfo().getType().implicit(DataType.INT)) {
+			if (!node.getChild(3).getSymbolInfo().getType().implicit(DataType.INT)) {
 				throw new SemanticAnalyserException(node);
 			}
 			check(node.getChild(5));
@@ -1193,7 +1199,7 @@ public class SemanticAnalyzer {
 			}
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
-			context.symbolInfo.dataType.addAll(node.getChildren().get(1).getSymbolInfo().dataType);
+			context.symbolInfo.dataType.addAll(node.getChildren().get(2).getSymbolInfo().dataType);
 		}
 
 	}
@@ -1241,23 +1247,24 @@ public class SemanticAnalyzer {
 
 		} else if (context
 				.isProduction("<postfiks_izraz> ::= <postfiks_izraz> L_ZAGRADA <lista_argumenata> D_ZAGRADA")) {
-			if (!check(context.firstChild) || !check(context.node.getChild(2))) {
+			check(context.firstChild);
+			check(node.getChild(2));
+
+			// ako nije u pitanju funkcija
+			if (context.firstChild.getSymbolInfo().dataType.size() < 2) {
 				throw new SemanticAnalyserException(node);
 			}
 
-			if (!context.firstChild.getSymbolInfo().symbolType.equals(SymbolType.FUNCTION)) {
-				throw new SemanticAnalyserException(node);
-			}
+			Node child = node.getChild(2);
+			int argNum = child.getSymbolInfo().dataType.size();
 
-			Node secondChild = node.getChild(2);
-			int argNum = secondChild.getSymbolInfo().dataType.size();
-
+			// ako nije u pitanju funkcija
 			if (context.firstChild.getSymbolInfo().dataType.size() - 1 != argNum) {
 				throw new SemanticAnalyserException(node);
 			}
 
 			List<DataType> paramTypes = context.firstChild.getSymbolInfo().dataTypeTail();
-			List<DataType> argTypes = secondChild.getSymbolInfo().dataType;
+			List<DataType> argTypes = child.getSymbolInfo().dataType;
 
 			for (int i = 0; i < argNum; i++) {
 				if (!argTypes.get(i).implicit(paramTypes.get(i))) {
@@ -1265,6 +1272,7 @@ public class SemanticAnalyzer {
 				}
 			}
 
+			context.symbolInfo.dataType.add(context.firstChild.getSymbolInfo().getType());
 			context.symbolInfo.l_expr = false;
 		} else if (context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> OP_INC")
 				|| context.isProduction("<postfiks_izraz> ::= <postfiks_izraz> OP_DEC")) {
@@ -1460,10 +1468,6 @@ public class SemanticAnalyzer {
 
 	private boolean isDeclaredLocally(String name) {
 		return scope.isDeclared(name);
-	}
-
-	private static boolean implicitInt(DataType dataType) {
-		return dataType == DataType.CHAR || dataType == DataType.INT;
 	}
 
 	private static boolean validIntRange(String value) {

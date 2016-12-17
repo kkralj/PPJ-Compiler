@@ -48,7 +48,13 @@ public class SymbolInfo {
 	}
 
 	public List<DataType> dataTypeTail() {
-		return dataType.subList(1, dataType.size() - 1);
+		List<DataType> tail = new ArrayList<>();
+		
+		for (int i = 1; i < dataType.size(); i++) {
+			tail.add(dataType.get(i));
+		}
+		
+		return tail;
 	}
 
 }
