@@ -291,6 +291,9 @@ public class SemanticAnalyzer {
 		if (context.isProduction("<deklaracija> ::= <ime_tipa> <lista_init_deklaratora> TOCKAZAREZ")) {
 			check(context.firstChild);
 
+			// uz nasljedno svojstvo <lista_init_deklaratora>.ntip ←
+			// <ime_tipa>.tip
+
 			inheritableType.push(context.firstChild.getSymbolInfo().getType());
 			check(node.getChild(1));
 			inheritableType.pop();
