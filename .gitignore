@@ -5,3 +5,4 @@ PPJ_Lex/*.txt
 PPJ_Syntax/*.txt
 .idea/
 *.iml
+*.orig
