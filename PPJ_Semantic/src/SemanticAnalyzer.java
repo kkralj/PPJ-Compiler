@@ -336,6 +336,10 @@ public class SemanticAnalyzer {
 			check(context.firstChild);
 
 			check(node.getChild(2));
+			
+			if (node.getChild(2).getSymbolInfo().dataType.size() != 1) {
+				throw new SemanticAnalyserException(node);
+			}
 
 			DataType dataType = context.firstChild.getSymbolInfo().getType();
 
@@ -368,13 +372,13 @@ public class SemanticAnalyzer {
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		String name = context.firstChild.getTokenName();
-		Scope globalScope = getGlobalScope();
+		//Scope globalScope = getGlobalScope();
 
 		context.symbolInfo.l_expr = true;
 
 		if (context.isProduction("<izravni_deklarator> ::= IDN")) {
 
-			name = context.firstChild.getTokenName();
+			//name = context.firstChild.getTokenName();
 
 			if (inheritableType.peek().equals(DataType.VOID) || isDeclaredLocally(name)) {
 				throw new SemanticAnalyserException(node);
@@ -419,8 +423,8 @@ public class SemanticAnalyzer {
 			// zero arguments
 			//name += "$0";
 
-			if (scope.isLocalScope() && globalScope.isDeclared(name)) {
-				SymbolInfo symbolInfo = globalScope.getSymbolInfo(name);
+			if (scope.isLocalScope()) {
+				SymbolInfo symbolInfo = scope.getSymbolInfo(name);
 
 				if (symbolInfo.dataType.size() != 2 || !symbolInfo.getType().equals(inheritableType.peek())
 						|| !symbolInfo.dataType.get(1).equals(DataType.VOID)) {
@@ -439,8 +443,8 @@ public class SemanticAnalyzer {
 			// n arguments
 			//name += "$" + node.getChild(2).getSymbolInfo().dataType.size();
 
-			if (scope.isLocalScope() && globalScope.isDeclared(name)) {
-				SymbolInfo symbolInfo = globalScope.getSymbolInfo(name);
+			if (scope.isDeclaredLocally(name)) {
+				SymbolInfo symbolInfo = scope.getSymbolInfo(name);
 				List<DataType> declared = symbolInfo.dataType;
 				List<DataType> newlyDeclared = node.getChild(2).getSymbolInfo().dataType;
 
@@ -488,6 +492,7 @@ public class SemanticAnalyzer {
 				}
 			} else {
 				context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
+				context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 			}
 		} else if (context
 				.isProduction("<inicijalizator> ::= L_VIT_ZAGRADA <lista_izraza_pridruzivanja> D_VIT_ZAGRADA")) {
@@ -873,6 +878,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<log_ili_izraz> ::= <log_ili_izraz> OP_ILI <log_i_izraz>")) {
 			check(context.firstChild);
 
@@ -902,6 +908,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<log_i_izraz> ::= <log_i_izraz> OP_I <bin_ili_izraz>")) {
 			check(context.firstChild);
 
@@ -931,6 +938,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<bin_ili_izraz> ::= <bin_ili_izraz> OP_BIN_ILI <bin_xili_izraz>")) {
 			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().getType().implicit(DataType.INT)
 					|| !check(node.getChild(2)) || !node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
@@ -953,6 +961,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<bin_xili_izraz> ::= <bin_xili_izraz> OP_BIN_XILI <bin_i_izraz>")) {
 			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().getType().implicit(DataType.INT)
 					|| !check(node.getChild(2)) || !node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
@@ -977,6 +986,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<bin_i_izraz> ::= <bin_i_izraz> OP_BIN_I <jednakosni_izraz>")) {
 			check(context.firstChild);
 
@@ -1006,6 +1016,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context
 				.isProduction("<izraz_pridruzivanja> ::= <postfiks_izraz> OP_PRIDRUZI <izraz_pridruzivanja>")) {
 			check(context.firstChild);
@@ -1036,6 +1047,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else {
 			check(context.firstChild);
 
@@ -1070,6 +1082,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else {
 			check(context.firstChild);
 
@@ -1102,6 +1115,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<multiplikativni_izraz> ::= <multiplikativni_izraz> OP_PUTA <cast_izraz>")
 				|| context.isProduction("<multiplikativni_izraz> ::= <multiplikativni_izraz> OP_DIJELI <cast_izraz>")
 				|| context.isProduction("<multiplikativni_izraz> ::= <multiplikativni_izraz> OP_MOD <cast_izraz>")) {
@@ -1182,6 +1196,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<cast_izraz> ::= L_ZAGRADA <ime_tipa> D_ZAGRADA <cast_izraz>")) {
 
 			check(node.getChild(1));
@@ -1233,6 +1248,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<unarni_izraz> ::= OP_INC <unarni_izraz>")
 				|| context.isProduction("<unarni_izraz> ::= OP_DEC <unarni_izraz>")) {
 			Node child = node.getChild(1);
@@ -1297,6 +1313,7 @@ public class SemanticAnalyzer {
 			if (check(context.firstChild)) {
 				context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 				context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+				context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 			} else {
 				throw new SemanticAnalyserException(node);
 			}
@@ -1430,6 +1447,7 @@ public class SemanticAnalyzer {
 
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = context.firstChild.getSymbolInfo().symbolType;
 		} else if (context.isProduction("<aditivni_izraz> ::= <aditivni_izraz> PLUS <multiplikativni_izraz>")
 				|| context.isProduction("<aditivni_izraz> ::= <aditivni_izraz> MINUS <multiplikativni_izraz>")) {
 			check(context.firstChild);

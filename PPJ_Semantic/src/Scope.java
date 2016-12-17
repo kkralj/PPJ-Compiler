@@ -81,4 +81,8 @@ public class Scope {
 		return parent;
 	}
 
+	public boolean isDeclaredLocally(String name) {
+		return symbolExists(name);
+	}
+
 }
