@@ -347,6 +347,8 @@ public class SemanticAnalyzer {
 				if (node.getChild(2).getSymbolInfo().elemCount > node.getChild(0).getSymbolInfo().elemCount) {
 					throw new SemanticAnalyserException(node);
 				}
+				
+				dataType = dataType.removeArray();
 
 				List<DataType> initializerTypes = node.getChild(2).getSymbolInfo().dataType;
 
