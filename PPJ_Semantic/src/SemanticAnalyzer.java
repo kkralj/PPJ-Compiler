@@ -409,10 +409,20 @@ public class SemanticAnalyzer {
 				throw new SemanticAnalyserException(node);
 			}
 		} else if (context.isProduction("<izravni_deklarator> ::= IDN L_ZAGRADA KR_VOID D_ZAGRADA")) {
+			/*
+			 * Moze postojati vise funkcija istog imena, ali sve moraju imati
+			 * razlicit broj parametara. Npr. mozemo imati na pocetku bloka
+			 * deklariranu int f(void), a zatim int f(int x).
+			 * 
+			 */
+
+			// zero arguments
+			//name += "$0";
+
 			if (scope.isLocalScope() && globalScope.isDeclared(name)) {
 				SymbolInfo symbolInfo = globalScope.getSymbolInfo(name);
 
-				if (symbolInfo.dataType.size() != 2 || !symbolInfo.getType().equals(inheritableType)
+				if (symbolInfo.dataType.size() != 2 || !symbolInfo.getType().equals(inheritableType.peek())
 						|| !symbolInfo.dataType.get(1).equals(DataType.VOID)) {
 					throw new SemanticAnalyserException(node);
 				}
@@ -425,6 +435,9 @@ public class SemanticAnalyzer {
 			}
 		} else if (context.isProduction("<izravni_deklarator> ::= IDN L_ZAGRADA <lista_parametara> D_ZAGRADA")) {
 			check(node.getChild(2));
+
+			// n arguments
+			//name += "$" + node.getChild(2).getSymbolInfo().dataType.size();
 
 			if (scope.isLocalScope() && globalScope.isDeclared(name)) {
 				SymbolInfo symbolInfo = globalScope.getSymbolInfo(name);
@@ -447,7 +460,7 @@ public class SemanticAnalyzer {
 				context.symbolInfo.symbolType = SymbolType.FUNCTION;
 				context.symbolInfo.dataType.add(inheritableType.peek());
 				context.symbolInfo.dataType.addAll(node.getChild(2).getSymbolInfo().dataType);
-				
+
 				context.symbolInfo.isDefined = false;
 
 				declareGlobally(name, context.symbolInfo);
@@ -554,7 +567,7 @@ public class SemanticAnalyzer {
 			if (scope.isFunctionDefined(functionName)) {
 				throw new SemanticAnalyserException(node);
 			}
-			
+
 			if (scope.isDeclared(functionName)) {
 				List<DataType> functionSignature = scope.getSymbolInfo(functionName).dataType;
 				if (functionSignature.size() != 2
@@ -655,7 +668,7 @@ public class SemanticAnalyzer {
 
 			List<DataType> functionSignature = getFunctionSignature(node);
 
-			if (functionSignature.size() == 0
+			if (node.getChild(1).getSymbolInfo().dataType.size() != 1 || functionSignature.size() == 0
 					|| !node.getChild(1).getSymbolInfo().getType().implicit(functionSignature.get(0))) {
 				throw new SemanticAnalyserException(node);
 			}
@@ -1174,9 +1187,9 @@ public class SemanticAnalyzer {
 			check(node.getChild(1));
 
 			check(node.getChild(3));
-			
-			if (node.getChild(3).getSymbolInfo().dataType.size() != 1 || !node.getChild(3).getSymbolInfo().dataType.get(0)
-					.explicit(node.getChild(1).getSymbolInfo().dataType.get(0))) {
+
+			if (node.getChild(3).getSymbolInfo().dataType.size() != 1 || !node.getChild(3).getSymbolInfo().dataType
+					.get(0).explicit(node.getChild(1).getSymbolInfo().dataType.get(0))) {
 				throw new SemanticAnalyserException(node);
 			}
 
