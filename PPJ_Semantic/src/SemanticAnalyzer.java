@@ -697,9 +697,9 @@ public class SemanticAnalyzer {
 					throw new SemanticAnalyserException(node);
 				}
 			}
-			
+
 			check(node.getChild(4));
-	
+
 			check(node.getChild(6));
 		}
 
@@ -743,13 +743,13 @@ public class SemanticAnalyzer {
 			check(node.getChild(4));
 		} else {
 			check(node.getChild(2));
-			
+
 			if (!node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
 				throw new SemanticAnalyserException(node);
 			}
-			
+
 			check(node.getChild(4));
-			
+
 			check(node.getChild(6));
 		}
 
@@ -989,9 +989,8 @@ public class SemanticAnalyzer {
 				throw new SemanticAnalyserException(node);
 			}
 			check(node.getChild(2));
-			
-			if (!node.getChild(2).getSymbolInfo().getType()
-							.implicit(context.firstChild.getSymbolInfo().getType())) {
+
+			if (!node.getChild(2).getSymbolInfo().getType().implicit(context.firstChild.getSymbolInfo().getType())) {
 				throw new SemanticAnalyserException(node);
 			}
 
@@ -1264,7 +1263,7 @@ public class SemanticAnalyzer {
 
 		if (context.isProduction("<postfiks_izraz> ::= <primarni_izraz>")) {
 			if (check(context.firstChild)) {
-				context.symbolInfo.dataType.add(context.firstChild.getSymbolInfo().getType());
+				context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 				context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
 			} else {
 				throw new SemanticAnalyserException(node);
@@ -1349,8 +1348,9 @@ public class SemanticAnalyzer {
 			String name = context.firstChild.getTokenName();
 
 			if (scope.isDeclared(name)) {
-				context.symbolInfo.dataType.add(scope.getSymbolInfo(name).getType());
+				context.symbolInfo.dataType.addAll(scope.getSymbolInfo(name).dataType);
 				context.symbolInfo.l_expr = scope.getSymbolInfo(name).l_expr;
+				context.symbolInfo.symbolType = scope.getSymbolInfo(name).symbolType;
 			} else {
 				throw new SemanticAnalyserException(node);
 			}
@@ -1378,12 +1378,11 @@ public class SemanticAnalyzer {
 		} else if (context.isProduction("<primarni_izraz> ::= L_ZAGRADA <izraz> D_ZAGRADA")) {
 			Node child = node.getChild(1);
 
-			if (check(child)) {
-				context.symbolInfo.dataType.add(child.getSymbolInfo().getType());
-				context.symbolInfo.l_expr = child.getSymbolInfo().l_expr;
-			} else {
-				throw new SemanticAnalyserException(node);
-			}
+			check(child);
+			context.symbolInfo.dataType.add(child.getSymbolInfo().getType());
+			context.symbolInfo.l_expr = child.getSymbolInfo().l_expr;
+			context.symbolInfo.symbolType = child.getSymbolInfo().symbolType;
+
 		}
 	}
 
