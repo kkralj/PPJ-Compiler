@@ -447,6 +447,8 @@ public class SemanticAnalyzer {
 				context.symbolInfo.symbolType = SymbolType.FUNCTION;
 				context.symbolInfo.dataType.add(inheritableType.peek());
 				context.symbolInfo.dataType.addAll(node.getChild(2).getSymbolInfo().dataType);
+				
+				context.symbolInfo.isDefined = false;
 
 				declareGlobally(name, context.symbolInfo);
 			}
