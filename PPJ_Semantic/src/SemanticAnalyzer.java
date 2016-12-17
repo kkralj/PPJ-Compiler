@@ -347,7 +347,7 @@ public class SemanticAnalyzer {
 				if (node.getChild(2).getSymbolInfo().elemCount > node.getChild(0).getSymbolInfo().elemCount) {
 					throw new SemanticAnalyserException(node);
 				}
-				
+
 				dataType = dataType.removeArray();
 
 				List<DataType> initializerTypes = node.getChild(2).getSymbolInfo().dataType;
@@ -657,46 +657,51 @@ public class SemanticAnalyzer {
 	}
 
 	private void naredba_petlje(Node node) throws SemanticAnalyserException {
-        // <naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>
-        // | KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA
-        // <naredba>
-        // | KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> <izraz> D_ZAGRADA
-        // <naredba>
-        InternalNodeContext context = new InternalNodeContext(node);
+		// <naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>
+		// | KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA
+		// <naredba>
+		// | KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> <izraz> D_ZAGRADA
+		// <naredba>
+		InternalNodeContext context = new InternalNodeContext(node);
 
-        if (context.isProduction("<naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>")) {
-            check(node.getChild(2));
-            if (!node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
-                throw new SemanticAnalyserException(node);
-            }
-            check(node.getChild(4));
-        } else if (context
-                .isProduction("<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA <naredba>")) {
-            check(node.getChild(2));
-            check(node.getChild(3));
-            if (!node.getChild(3).getSymbolInfo().getType().implicit(DataType.INT)) {
-                throw new SemanticAnalyserException(node);
-            }
-            check(node.getChild(5));
-        } else {
+		if (context.isProduction("<naredba_petlje> ::= KR_WHILE L_ZAGRADA <izraz> D_ZAGRADA <naredba>")) {
+			check(node.getChild(2));
+			if (!node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
+			check(node.getChild(4));
+		} else if (context.isProduction(
+				"<naredba_petlje> ::= KR_FOR L_ZAGRADA <izraz_naredba> <izraz_naredba> D_ZAGRADA <naredba>")) {
+			check(node.getChild(2));
+			check(node.getChild(3));
+			if (!node.getChild(3).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
+			check(node.getChild(5));
+		} else {
 
-            check(node.getChild(2));
-            check(node.getChild(3));
+			check(node.getChild(2));
+			check(node.getChild(3));
 
-            if (!node.getChild(3).getSymbolInfo().getType().implicit(DataType.INT)) {
-                throw new SemanticAnalyserException(node);
-            }
+			if (!node.getChild(3).getSymbolInfo().getType().implicit(DataType.INT)) {
+				throw new SemanticAnalyserException(node);
+			}
 
-            if (node.getChild(3).getSymbolInfo().dataType.size() != 1) { // ako je funkcija
-                if (node.getChild(3).getSymbolInfo().symbolType != SymbolType.FUNCTION) { // a nije dobro deklarirana
-                    throw new SemanticAnalyserException(node);
-                }
-            }
-            check(node.getChild(4));
-            check(node.getChild(6));
-        }
+			if (node.getChild(3).getSymbolInfo().dataType.size() != 1) { // ako
+																			// je
+																			// funkcija
+				if (node.getChild(3).getSymbolInfo().symbolType != SymbolType.FUNCTION) { // a
+																							// nije
+																							// dobro
+																							// deklarirana
+					throw new SemanticAnalyserException(node);
+				}
+			}
+			check(node.getChild(4));
+			check(node.getChild(6));
+		}
 
-    }
+	}
 
 	private void vanjska_deklaracija(Node node) throws SemanticAnalyserException {
 		InternalNodeContext context = new InternalNodeContext(node);
@@ -962,8 +967,14 @@ public class SemanticAnalyzer {
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
 		} else if (context
 				.isProduction("<izraz_pridruzivanja> ::= <postfiks_izraz> OP_PRIDRUZI <izraz_pridruzivanja>")) {
-			if (!check(context.firstChild) || !context.firstChild.getSymbolInfo().l_expr || !check(node.getChild(2))
-					|| !node.getChild(2).getSymbolInfo().getType()
+			check(context.firstChild);
+
+			if (!context.firstChild.getSymbolInfo().l_expr) {
+				throw new SemanticAnalyserException(node);
+			}
+			check(node.getChild(2));
+			
+			if (!node.getChild(2).getSymbolInfo().getType()
 							.implicit(context.firstChild.getSymbolInfo().getType())) {
 				throw new SemanticAnalyserException(node);
 			}

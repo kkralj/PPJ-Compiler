@@ -3,11 +3,14 @@ public enum DataType {
 	VOID, CHAR, INT, CONST_CHAR, CONST_INT, CHAR_ARRAY, INT_ARRAY, CONST_CHAR_ARRAY, CONST_INT_ARRAY;
 
 	public static DataType getDataType(String dataType) {
-		if (dataType == "void") {
+
+		dataType = dataType.toLowerCase();
+
+		if (dataType.equals("void")) {
 			return VOID;
-		} else if (dataType == "char") {
+		} else if (dataType.equals("char")) {
 			return CHAR;
-		} else if (dataType == "int") {
+		} else if (dataType.equals("int")) {
 			return INT;
 		}
 
@@ -48,21 +51,25 @@ public enum DataType {
 		return CONST_INT_ARRAY;
 	}
 
-	public String getPlainType() {
+	public DataType getPlainType() {
 		String type = toString();
 
 		boolean _isConst = isConst();
 		boolean _isArray = isArray();
 
+		String res;
+
 		if (!_isConst && !_isArray) {
-			return type;
+			res = type;
 		} else if (_isConst && _isArray) {
-			return type.split("_")[1];
+			res = type.split("_")[1];
 		} else if (_isConst && !_isArray) {
-			return type.split("_")[1];
+			res = type.split("_")[1];
 		} else {
-			return type.split("_")[0];
+			res = type.split("_")[0];
 		}
+
+		return getDataType(res);
 	}
 
 	public boolean isPlain() {
