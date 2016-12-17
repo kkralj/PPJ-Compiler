@@ -336,10 +336,10 @@ public class SemanticAnalyzer {
 			check(context.firstChild);
 
 			check(node.getChild(2));
-			
-			if (node.getChild(2).getSymbolInfo().dataType.size() != 1) {
-				throw new SemanticAnalyserException(node);
-			}
+
+			// if (node.getChild(2).getSymbolInfo().dataType.size() != 1) {
+			// throw new SemanticAnalyserException(node);
+			// }
 
 			DataType dataType = context.firstChild.getSymbolInfo().getType();
 
@@ -372,13 +372,13 @@ public class SemanticAnalyzer {
 		InternalNodeContext context = new InternalNodeContext(node);
 
 		String name = context.firstChild.getTokenName();
-		//Scope globalScope = getGlobalScope();
+		// Scope globalScope = getGlobalScope();
 
 		context.symbolInfo.l_expr = true;
 
 		if (context.isProduction("<izravni_deklarator> ::= IDN")) {
 
-			//name = context.firstChild.getTokenName();
+			// name = context.firstChild.getTokenName();
 
 			if (inheritableType.peek().equals(DataType.VOID) || isDeclaredLocally(name)) {
 				throw new SemanticAnalyserException(node);
@@ -421,9 +421,9 @@ public class SemanticAnalyzer {
 			 */
 
 			// zero arguments
-			//name += "$0";
+			// name += "$0";
 
-			if (scope.isLocalScope()) {
+			if (scope.isDeclaredLocally(name)) {
 				SymbolInfo symbolInfo = scope.getSymbolInfo(name);
 
 				if (symbolInfo.dataType.size() != 2 || !symbolInfo.getType().equals(inheritableType.peek())
@@ -441,7 +441,7 @@ public class SemanticAnalyzer {
 			check(node.getChild(2));
 
 			// n arguments
-			//name += "$" + node.getChild(2).getSymbolInfo().dataType.size();
+			// name += "$" + node.getChild(2).getSymbolInfo().dataType.size();
 
 			if (scope.isDeclaredLocally(name)) {
 				SymbolInfo symbolInfo = scope.getSymbolInfo(name);
@@ -1400,6 +1400,7 @@ public class SemanticAnalyzer {
 				context.symbolInfo.dataType.addAll(scope.getSymbolInfo(name).dataType);
 				context.symbolInfo.l_expr = scope.getSymbolInfo(name).l_expr;
 				context.symbolInfo.symbolType = scope.getSymbolInfo(name).symbolType;
+				context.symbolInfo.name = context.firstChild.getTokenName();
 			} else {
 				throw new SemanticAnalyserException(node);
 			}

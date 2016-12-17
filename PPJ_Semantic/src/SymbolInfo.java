@@ -15,6 +15,8 @@ public class SymbolInfo {
 	int elemCount;
 
 	List<String> argumentNames = new ArrayList<>();
+	
+	String name;
 
 	public SymbolInfo() {
 	}
