@@ -549,6 +549,10 @@ public class SemanticAnalyzer {
 
 			String functionName = node.getChild(1).getTokenName();
 
+			if (scope.isFunctionDefined(functionName)) {
+				throw new SemanticAnalyserException(node);
+			}
+			
 			if (scope.isDeclared(functionName)) {
 				List<DataType> functionSignature = scope.getSymbolInfo(functionName).dataType;
 				if (functionSignature.size() != 2
@@ -1020,13 +1024,15 @@ public class SemanticAnalyzer {
 		} else {
 			check(context.firstChild);
 
-			if (context.firstChild.getSymbolInfo().dataType.size() != 1 || !context.firstChild.getSymbolInfo().getType().implicit(DataType.INT)) {
+			if (context.firstChild.getSymbolInfo().dataType.size() != 1
+					|| !context.firstChild.getSymbolInfo().getType().implicit(DataType.INT)) {
 				throw new SemanticAnalyserException(node);
 			}
 
 			check(node.getChild(2));
 
-			if (node.getChild(2).getSymbolInfo().dataType.size() != 1 || !node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
+			if (node.getChild(2).getSymbolInfo().dataType.size() != 1
+					|| !node.getChild(2).getSymbolInfo().getType().implicit(DataType.INT)) {
 				throw new SemanticAnalyserException(node);
 			}
 
@@ -1162,12 +1168,17 @@ public class SemanticAnalyzer {
 			context.symbolInfo.dataType.addAll(context.firstChild.getSymbolInfo().dataType);
 			context.symbolInfo.l_expr = context.firstChild.getSymbolInfo().l_expr;
 		} else if (context.isProduction("<cast_izraz> ::= L_ZAGRADA <ime_tipa> D_ZAGRADA <cast_izraz>")) {
-			if (!check(node.getChild(1)) || !check(node.getChild(3)) || !node.getChild(3).getSymbolInfo().dataType
-					.get(0).implicit(node.getChild(1).getSymbolInfo().dataType.get(0))) {
+
+			check(node.getChild(1));
+
+			check(node.getChild(3));
+			
+			if (node.getChild(3).getSymbolInfo().dataType.size() != 1 || !node.getChild(3).getSymbolInfo().dataType.get(0)
+					.explicit(node.getChild(1).getSymbolInfo().dataType.get(0))) {
 				throw new SemanticAnalyserException(node);
 			}
 
-			context.symbolInfo.dataType.addAll(node.getChild(1).getSymbolInfo().dataType);
+			context.symbolInfo.dataType.add(node.getChild(1).getSymbolInfo().getType());
 			context.symbolInfo.l_expr = false;
 		}
 	}
