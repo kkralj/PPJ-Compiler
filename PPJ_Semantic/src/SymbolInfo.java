@@ -11,6 +11,7 @@ public class SymbolInfo {
 	List<DataType> dataType = new ArrayList<>();
 	boolean l_expr;
 	boolean isDefined;
+    boolean validFunctionCall;
 
 	int elemCount;
 
