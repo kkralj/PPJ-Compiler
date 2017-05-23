@@ -50,6 +50,14 @@ public class SymbolInfo {
 		return dataType.get(0);
 	}
 
+	public void addAllArguments(List<String> arguments) {
+        this.argumentNames = arguments;
+    }
+
+	public void addAllData(List<DataType> list) {
+        this.dataType = list;
+    }
+
 	public List<DataType> dataTypeTail() {
 		List<DataType> tail = new ArrayList<>();
 		
