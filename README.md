@@ -1,6 +1,8 @@
-Prevođenje programskih jezika
+*Programming Language Translation* course
 
-Autori: 
+Authors: 
 - Nikola Bunjevac
 - Krešimir Kralj
 - Mato Manović
+
+https://www.fer.unizg.hr/en/course/plt
